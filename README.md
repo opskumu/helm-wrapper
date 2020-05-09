@@ -14,7 +14,9 @@ POST Body:
 
 ``` json
 {
-    "values": ""
+    "values": "",           // `--values`
+    "set": [],              // `--set`
+    "set_string": []        // `--set-string`
 }
 ```
 
@@ -31,7 +33,9 @@ PUT Body:
 
 ``` json
 {
-    "values": ""
+    "values": "",           // `--values`
+    "set": [],              // `--set`
+    "set_string": []        // `--set-string`
 }
 ```
 
