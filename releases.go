@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -210,7 +211,7 @@ func installRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	var options releaseOptions
 	err := c.BindJSON(&options)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
 	}
@@ -333,7 +334,12 @@ func upgradeRelease(c *gin.Context) {
 	var options releaseOptions
 	err := c.BindJSON(&options)
 	if err != nil {
-		respErr(c, err)
+		if err != io.EOF {
+			respErr(c, err)
+			return
+		}
+
+		respErr(c, fmt.Errorf("upgrade options can not be empty"))
 		return
 	}
 
