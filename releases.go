@@ -12,6 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/strvals"
 	helmtime "helm.sh/helm/v3/pkg/time"
 	"sigs.k8s.io/yaml"
 )
@@ -44,8 +45,10 @@ type releaseElement struct {
 
 type releaseList []releaseElement
 
-type releaseValuesBody struct {
-	Values string `json:"values"`
+type releaseOptions struct {
+	Values          string   `json:"values"`
+	SetValues       []string `json:"set"`
+	SetStringValues []string `json:"set_string"`
 }
 
 func formatChartname(c *chart.Chart) string {
@@ -64,6 +67,28 @@ func formatAppVersion(c *chart.Chart) string {
 		return "MISSING"
 	}
 	return c.AppVersion()
+}
+
+func mergeValues(options releaseOptions) (map[string]interface{}, error) {
+	vals := map[string]interface{}{}
+	err := yaml.Unmarshal([]byte(options.Values), &vals)
+	if err != nil {
+		return vals, fmt.Errorf("failed parsing values")
+	}
+
+	for _, value := range options.SetValues {
+		if err := strvals.ParseInto(value, vals); err != nil {
+			return vals, fmt.Errorf("failed parsing set data")
+		}
+	}
+
+	for _, value := range options.SetStringValues {
+		if err := strvals.ParseIntoString(value, vals); err != nil {
+			return vals, fmt.Errorf("failed parsing set_string data")
+		}
+	}
+
+	return vals, nil
 }
 
 func getReleaseHistory(rls []*release.Release) (history releaseHistory) {
@@ -183,14 +208,14 @@ func installRelease(c *gin.Context) {
 	name := c.Param("release")
 	chart := c.Query("chart")
 	namespace := c.Param("namespace")
-	var valuesBody releaseValuesBody
-	err := c.BindJSON(&valuesBody)
+	var options releaseOptions
+	err := c.BindJSON(&options)
 	if err != nil {
 		respErr(c, err)
 		return
 	}
-	vals := map[string]interface{}{}
-	err = yaml.Unmarshal([]byte(valuesBody.Values), &vals)
+
+	vals, err := mergeValues(options)
 	if err != nil {
 		respErr(c, err)
 		return
@@ -305,14 +330,14 @@ func upgradeRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	chart := c.Query("chart")
-	var valuesBody releaseValuesBody
-	err := c.BindJSON(&valuesBody)
+	var options releaseOptions
+	err := c.BindJSON(&options)
 	if err != nil {
 		respErr(c, err)
 		return
 	}
-	vals := map[string]interface{}{}
-	err = yaml.Unmarshal([]byte(valuesBody.Values), &vals)
+
+	vals, err := mergeValues(options)
 	if err != nil {
 		respErr(c, err)
 		return
