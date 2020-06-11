@@ -34,6 +34,7 @@ func main() {
 		listenPort string
 		config     string
 	)
+
 	flag.Set("logtostderr", "true")
 	pflag.CommandLine.StringVar(&listenHost, "addr", "0.0.0.0", "server listen addr")
 	pflag.CommandLine.StringVar(&listenPort, "port", "8080", "server listen port")

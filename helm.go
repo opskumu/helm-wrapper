@@ -5,13 +5,19 @@ import (
 
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/kube"
 )
 
 func actionConfigInit(namespace string) (action.Configuration, error) {
-	settings := cli.New()
 	actionConfig := new(action.Configuration)
-	err := actionConfig.Init(settings.RESTClientGetter(), namespace, os.Getenv("HELM_DRIVER"), glog.Infof)
+	clientConfig := kube.GetConfig(settings.KubeConfig, settings.KubeContext, namespace)
+	if settings.KubeToken != "" {
+		clientConfig.BearerToken = &settings.KubeToken
+	}
+	if settings.KubeAPIServer != "" {
+		clientConfig.APIServer = &settings.KubeAPIServer
+	}
+	err := actionConfig.Init(clientConfig, namespace, os.Getenv("HELM_DRIVER"), glog.Infof)
 	if err != nil {
 		glog.Errorf("%+v", err)
 		return *actionConfig, err
