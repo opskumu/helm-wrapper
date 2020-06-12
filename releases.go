@@ -169,7 +169,7 @@ func showReleaseInfo(c *gin.Context) {
 		return
 	}
 	if info == "values" {
-		client := action.NewGetValues(&actionConfig)
+		client := action.NewGetValues(actionConfig)
 		results, err := client.Run(name)
 		if err != nil {
 			respErr(c, err)
@@ -179,7 +179,7 @@ func showReleaseInfo(c *gin.Context) {
 		return
 	}
 
-	client := action.NewGet(&actionConfig)
+	client := action.NewGet(actionConfig)
 	results, err := client.Run(name)
 	if err != nil {
 		respErr(c, err)
@@ -227,7 +227,7 @@ func installRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	client := action.NewInstall(&actionConfig)
+	client := action.NewInstall(actionConfig)
 	client.ReleaseName = name
 	client.Namespace = namespace
 
@@ -291,7 +291,7 @@ func uninstallRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	client := action.NewUninstall(&actionConfig)
+	client := action.NewUninstall(actionConfig)
 	_, err = client.Run(name)
 	if err != nil {
 		respErr(c, err)
@@ -316,7 +316,7 @@ func rollbackRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	client := action.NewRollback(&actionConfig)
+	client := action.NewRollback(actionConfig)
 	client.Version = reversion
 	err = client.Run(name)
 	if err != nil {
@@ -354,7 +354,7 @@ func upgradeRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	client := action.NewUpgrade(&actionConfig)
+	client := action.NewUpgrade(actionConfig)
 	client.Namespace = namespace
 
 	cp, err := client.ChartPathOptions.LocateChart(chart, settings)
@@ -392,7 +392,7 @@ func listReleases(c *gin.Context) {
 		return
 	}
 
-	client := action.NewList(&actionConfig)
+	client := action.NewList(actionConfig)
 	client.Deployed = true
 	results, err := client.Run()
 	if err != nil {
@@ -418,7 +418,7 @@ func getReleaseStatus(c *gin.Context) {
 		return
 	}
 
-	client := action.NewStatus(&actionConfig)
+	client := action.NewStatus(actionConfig)
 	results, err := client.Run(name)
 	if err != nil {
 		respErr(c, err)
@@ -438,7 +438,7 @@ func listReleaseHistories(c *gin.Context) {
 		return
 	}
 
-	client := action.NewHistory(&actionConfig)
+	client := action.NewHistory(actionConfig)
 	results, err := client.Run(name)
 	if err != nil {
 		respErr(c, err)

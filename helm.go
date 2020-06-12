@@ -8,7 +8,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 )
 
-func actionConfigInit(namespace string) (action.Configuration, error) {
+func actionConfigInit(namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	clientConfig := kube.GetConfig(settings.KubeConfig, settings.KubeContext, namespace)
 	if settings.KubeToken != "" {
@@ -20,8 +20,8 @@ func actionConfigInit(namespace string) (action.Configuration, error) {
 	err := actionConfig.Init(clientConfig, namespace, os.Getenv("HELM_DRIVER"), glog.Infof)
 	if err != nil {
 		glog.Errorf("%+v", err)
-		return *actionConfig, err
+		return nil, err
 	}
 
-	return *actionConfig, nil
+	return actionConfig, nil
 }
