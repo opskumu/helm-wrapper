@@ -1,10 +1,10 @@
-# A [Helm3](https://github.com/helm/helm) HTTP Wrapper With [Go SDK](https://helm.sh/docs/topics/advanced/#go-sdk)
+# A [Helm3](https://github.com/helm/helm) HTTP Wrapper With Go SDK
 
-+ [中文文档](README_CN.md)
-
-helm-wrapper is a helm3 HTTP wrapper with [helm Go SDK](https://helm.sh/docs/topics/advanced/#go-sdk). With helm-wrapper, you can use HTTP RESTFul API do something like helm commondline (install/uninstall/upgrade/get/list/rollback...).
+Helm3 摒弃了 Helm2 的 Tiller 架构，使用纯命令行的方式执行相关操作。如果想通过 Helm API 来实现相关功能，很遗憾官方并没有提供类似的服务。不过，因为官方提供了相对友好的 [Helm Go SDK](https://helm.sh/docs/topics/advanced/)，我们只需在此基础上做封装即可实现。[helm-wrapper](https://github.com/opskumu/helm-wrapper) 就是这样一个通过 Go [Gin](https://github.com/gin-gonic/gin) Web 框架，结合 Helm Go SDK 封装的 HTTP Server，让 Helm 相关的日常命令操作可以通过 Restful API 的方式来实现同样的操作。
 
 ## Support API
+
+helm 原生命令行和相关 API 对应关系：
 
 + helm install
     - `POST`
@@ -20,7 +20,7 @@ POST Body:
 }
 ```
 
-> `"values"` -> helm install `--values` option 
+> 此处 values 内容同 helm install `--values` 选项
 
 + helm uninstall
     - `DELETE`
@@ -39,7 +39,7 @@ PUT Body:
 }
 ```
 
-> `"values"` -> helm install `--values` option 
+> 此处 values 内容同 helm upgrade `--values` 选项
 
 + helm rollback
     - `PUT`
@@ -53,7 +53,7 @@ PUT Body:
 
 | Params | Name |
 | :- | :- |
-| info | support all/hooks/manifest/notes/values | 
+| info | 支持 all/hooks/manifest/notes/values 信息 | 
 
 + helm release history
     - `GET`
@@ -65,9 +65,9 @@ PUT Body:
 
 | Params | Name |
 | :- | :- |
-| chart  | chart name, required|
-| info   | support readme/values/chart |
-| version | --version |
+| chart  | 指定 chart 名，必填 |
+| info   | 支持 readme/values/chart 信息 |
+| version | 支持版本指定，同命令行 |
 
 + helm search repo
     - `GET`
@@ -75,8 +75,8 @@ PUT Body:
 
 | Params | Name |
 | :- | :- |
-| keyword | search keyword，required |
-| version | chart version |
+| keyword | 搜索关键字，必填 |
+| version | 指定 chart version |
 | versions | if "true", all versions |
 
 + helm repo update
@@ -87,10 +87,11 @@ PUT Body:
     - `GET`
     - `/api/envs`
 
-> __Notes:__ helm-wrapper is Alpha status, no more test
+> 当前该版本处于 Alpha 状态，还没有经过大量的测试，只是把相关的功能测试了一遍，你也可以在此基础上自定义适合自身的版本。
 
-### Response 
+### 响应
 
+为了简化，所有请求统一返回 200 状态码，通过返回 Body 中的 Code 值来判断响应是否正常：
 
 ``` go
 type respBody struct {
@@ -105,13 +106,15 @@ type respBody struct {
 
 ### Build
 
+源码提供了简单的 `Makefile` 文件，如果要构建二进制，只需要通过以下方式构建即可。
+
 ```
-make build
-make build-linux    // build helm-wrapper Linux binary
-make build-docker   // build docker image with helm-wrapper
+make build          // 构建当前主机架构的二进制版本
+make build-linux    // 构建 Linux 版本的二进制
+make build-docker   // 构建 Docker 镜像
 ```
 
-#### helm-wrapper help
+直接构建会生成名为 `helm-wrapper` 的二进制程序，你可以通过如下方式获取帮助：
 
 ```
 $ helm-wrapper -h
@@ -136,7 +139,9 @@ Usage of helm-wrapper:
 pflag: help requested
 ```
 
-+ `--config` helm-wrapper configuration: 
+关键性的选项说明一下：
+
++ `--config` helm-wrapper 的配置项，内容如下，主要是指定 Helm Repo 命名和 URL，用于 Repo 初始化。
 
 ```
 $ cat config-example.yaml
@@ -144,10 +149,11 @@ helmRepos:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
 ```
-
-+ `--kubeconfig` default kubeconfig path is `~/.kube/config`.About `kubeconfig`, you can see [Configure Access to Multiple Clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/).
++ `--kubeconfig` 默认如果你不指定的话，使用默认的路径，一般是 `~/.kube/config`。这个配置是必须的，这指明了你要操作的 Kubernetes 集群地址以及访问方式。`kubeconfig` 文件如何生成，这里不过多介绍，具体可以详见 [Configure Access to Multiple Clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
 
 ### Run
+
+运行比较简单，如果你本地已经有默认的 `kubeconfig` 文件，只需要把 helm-wrapper 需要的 repo 配置文件配置好即可，然后执行以下命令即可运行，示例如下：
 
 ```
 $ ./helm-wrapper --config config-example.yaml
@@ -171,3 +177,5 @@ $ ./helm-wrapper --config config-example.yaml
 [GIN-debug] GET    /api/namespaces/:namespace/releases/:release/status --> main.getReleaseStatus (3 handlers)
 [GIN-debug] GET    /api/namespaces/:namespace/releases/:release/histories --> main.listReleaseHistories (3 handlers)
 ```
+
+> 启动时会先初始化 repo，因此根据 repo 本身的大小或者网络因素，会耗费些时间
