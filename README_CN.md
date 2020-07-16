@@ -8,15 +8,25 @@ helm 原生命令行和相关 API 对应关系：
 
 + helm install
     - `POST`
-    - `/api/namespaces/:namespace/releases/:release`
+    - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
 
 POST Body: 
 
 ``` json
 {
-    "values": "",           // `--values`
-    "set": [],              // `--set`
-    "set_string": []        // `--set-string`
+    "dry_run": false,           // `--dry-run`
+    "disable_hooks": false,     // `--no-hooks`
+    "wait": false,              // `--wait`
+    "devel": false,             // `--false`
+    "description": "",          // `--description`
+    "atomic": false,            // `--atomic`
+    "skip_crds": false,         // `--skip-crds`
+    "sub_notes": false,         // `--render-subchart-notes`
+    "create_namespace": false,  // `--create-namespace`
+    "dependency_update": false, // `--dependency-update`
+    "values": "",               // `--values`
+    "set": [],                  // `--set`
+    "set_string": []            // `--set-string`
 }
 ```
 
@@ -27,17 +37,30 @@ POST Body:
     - `/api/namespaces/:namespace/releases/:release`
 + helm upgrade
     - `PUT`
-    - `/api/namespaces/:namespace/releases/:release`
+    - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
 
 PUT Body: 
 
 ``` json
 {
-    "values": "",           // `--values`
-    "set": [],              // `--set`
-    "set_string": []        // `--set-string`
+    "dry_run": false,           // `--dry-run`
+    "disable_hooks": false,     // `--no-hooks`
+    "wait": false,              // `--wait`
+    "devel": false,             // `--false`
+    "description": "",          // `--description`
+    "atomic": false,            // `--atomic`
+    "skip_crds": false,         // `--skip-crds`
+    "sub_notes": false,         // `--render-subchart-notes`
+    "force": false,             // `--force`
+    "install": false,           // `--install`
+    "recreate": false,          // `--recreate`
+    "cleanup_on_fail": false,   // `--cleanup-on-fail`
+    "values": "",               // `--values`
+    "set": [],                  // `--set`
+    "set_string": []            // `--set-string`
 }
 ```
+
 
 > 此处 values 内容同 helm upgrade `--values` 选项
 
