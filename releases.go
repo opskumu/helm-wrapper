@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -47,9 +48,29 @@ type releaseElement struct {
 type releaseList []releaseElement
 
 type releaseOptions struct {
-	Values          string   `json:"values"`
-	SetValues       []string `json:"set"`
-	SetStringValues []string `json:"set_string"`
+	// common
+	DryRun          bool          `json:"dry_run"`
+	DisableHooks    bool          `json:"disable_hooks"`
+	Wait            bool          `json:"wait"`
+	Devel           bool          `json:"devel"`
+	Description     string        `json:"description"`
+	Atomic          bool          `json:"atomic"`
+	SkipCRDs        bool          `json:"skip_crds"`
+	SubNotes        bool          `json:"sub_notes"`
+	Timeout         time.Duration `json:"timeout"`
+	Values          string        `json:"values"`
+	SetValues       []string      `json:"set"`
+	SetStringValues []string      `json:"set_string"`
+
+	// only install
+	CreateNamespace  bool `json:"create_namespace"`
+	DependencyUpdate bool `json:"dependency_update"`
+
+	// only upgrade
+	Force         bool `json:"force"`
+	Install       bool `json:"install"`
+	Recreate      bool `json:"recreate"`
+	CleanupOnFail bool `json:"cleanup_on_fail"`
 }
 
 func formatChartname(c *chart.Chart) string {
@@ -207,8 +228,8 @@ func showReleaseInfo(c *gin.Context) {
 
 func installRelease(c *gin.Context) {
 	name := c.Param("release")
-	chart := c.Query("chart")
 	namespace := c.Param("namespace")
+	chart := c.Query("chart")
 	var options releaseOptions
 	err := c.BindJSON(&options)
 	if err != nil && err != io.EOF {
@@ -230,6 +251,19 @@ func installRelease(c *gin.Context) {
 	client := action.NewInstall(actionConfig)
 	client.ReleaseName = name
 	client.Namespace = namespace
+
+	// merge install options
+	client.DryRun = options.DryRun
+	client.DisableHooks = options.DisableHooks
+	client.Wait = options.Wait
+	client.Devel = options.Devel
+	client.Description = options.Description
+	client.Atomic = options.Atomic
+	client.SkipCRDs = options.SkipCRDs
+	client.SubNotes = options.SubNotes
+	client.Timeout = options.Timeout
+	client.CreateNamespace = options.CreateNamespace
+	client.DependencyUpdate = options.DependencyUpdate
 
 	cp, err := client.ChartPathOptions.LocateChart(chart, settings)
 	if err != nil {
@@ -356,6 +390,21 @@ func upgradeRelease(c *gin.Context) {
 	}
 	client := action.NewUpgrade(actionConfig)
 	client.Namespace = namespace
+
+	// merge upgrade options
+	client.DryRun = options.DryRun
+	client.DisableHooks = options.DisableHooks
+	client.Wait = options.Wait
+	client.Devel = options.Devel
+	client.Description = options.Description
+	client.Atomic = options.Atomic
+	client.SkipCRDs = options.SkipCRDs
+	client.SubNotes = options.SubNotes
+	client.Timeout = options.Timeout
+	client.Force = options.Force
+	client.Install = options.Install
+	client.Recreate = options.Recreate
+	client.CleanupOnFail = options.CleanupOnFail
 
 	cp, err := client.ChartPathOptions.LocateChart(chart, settings)
 	if err != nil {
