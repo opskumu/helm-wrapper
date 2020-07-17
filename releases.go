@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -230,6 +231,17 @@ func installRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	chart := c.Query("chart")
+	if chart == "" {
+		respErr(c, fmt.Errorf("chart name can not be empty"))
+		return
+	}
+
+	// install with local uploaded charts, *.tgz
+	splitChart := strings.Split(chart, ".")
+	if splitChart[len(splitChart)-1] == "tgz" {
+		chart = helmConfig.UploadPath + "/" + chart
+	}
+
 	var options releaseOptions
 	err := c.BindJSON(&options)
 	if err != nil && err != io.EOF {
@@ -365,6 +377,17 @@ func upgradeRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	chart := c.Query("chart")
+	if chart == "" {
+		respErr(c, fmt.Errorf("chart name can not be empty"))
+		return
+	}
+
+	// upgrade with local uploaded charts *.tgz
+	splitChart := strings.Split(chart, ".")
+	if splitChart[len(splitChart)-1] == "tgz" {
+		chart = helmConfig.UploadPath + "/" + chart
+	}
+
 	var options releaseOptions
 	err := c.BindJSON(&options)
 	if err != nil {

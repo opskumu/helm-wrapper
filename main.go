@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -20,12 +21,14 @@ import (
 )
 
 type HelmConfig struct {
-	HelmRepos []*repo.Entry `yaml:"helmRepos"`
+	UploadPath string        `yaml:"uploadPath"`
+	HelmRepos  []*repo.Entry `yaml:"helmRepos"`
 }
 
 var (
-	settings   = cli.New()
-	helmConfig = &HelmConfig{}
+	settings          = cli.New()
+	defaultUploadPath = "/tmp/charts"
+	helmConfig        = &HelmConfig{}
 )
 
 func main() {
@@ -51,6 +54,26 @@ func main() {
 	err = yaml.Unmarshal(configBody, helmConfig)
 	if err != nil {
 		glog.Fatalln(err)
+	}
+
+	// upload chart path
+	if helmConfig.UploadPath == "" {
+		helmConfig.UploadPath = defaultUploadPath
+	} else {
+		if !filepath.IsAbs(helmConfig.UploadPath) {
+			glog.Fatalln("charts upload path is not absolute")
+		}
+	}
+	_, err = os.Stat(helmConfig.UploadPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(helmConfig.UploadPath, 0755)
+			if err != nil {
+				glog.Fatalln(err)
+			}
+		} else {
+			glog.Fatalln(err)
+		}
 	}
 
 	// init repo

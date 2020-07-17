@@ -74,7 +74,7 @@ PUT Body:
     - `GET`
     - `/api/namespaces/:namespace/releases/:release`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | info | 支持 all/hooks/manifest/notes/values 信息 | 
 
@@ -86,7 +86,7 @@ PUT Body:
     - `GET`
     - `/api/charts`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | chart  | 指定 chart 名，必填 |
 | info   | 支持 readme/values/chart 信息 |
@@ -96,7 +96,7 @@ PUT Body:
     - `GET`
     - `/api/repositories/charts`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | keyword | 搜索关键字，必填 |
 | version | 指定 chart version |
@@ -109,6 +109,18 @@ PUT Body:
 + helm env
     - `GET`
     - `/api/envs`
+
++ upload chart
+    - `POST`
+    - `/api/charts/upload`
+
+| Params | Description |
+| :- | :- |
+| chart | chart 包，必须为 .tgz 文件 |
+
++ list local charts
+    - `GET`
+    - `/api/charts/upload`
 
 > 当前该版本处于 Alpha 状态，还没有经过大量的测试，只是把相关的功能测试了一遍，你也可以在此基础上自定义适合自身的版本。
 
@@ -168,6 +180,7 @@ pflag: help requested
 
 ```
 $ cat config-example.yaml
+uploadPath: /tmp/charts
 helmRepos:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
@@ -179,26 +192,7 @@ helmRepos:
 运行比较简单，如果你本地已经有默认的 `kubeconfig` 文件，只需要把 helm-wrapper 需要的 repo 配置文件配置好即可，然后执行以下命令即可运行，示例如下：
 
 ```
-$ ./helm-wrapper --config config-example.yaml
-[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
-
-[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
- - using env:   export GIN_MODE=release
- - using code:  gin.SetMode(gin.ReleaseMode)
-
-[GIN-debug] GET    /                         --> main.main.func1 (3 handlers)
-[GIN-debug] GET    /api/envs                 --> main.getHelmEnvs (3 handlers)
-[GIN-debug] GET    /api/repositories/charts  --> main.listRepoCharts (3 handlers)
-[GIN-debug] PUT    /api/repositories         --> main.updateRepositories (3 handlers)
-[GIN-debug] GET    /api/charts               --> main.showChartInfo (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases --> main.listReleases (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release --> main.showReleaseInfo (3 handlers)
-[GIN-debug] POST   /api/namespaces/:namespace/releases/:release --> main.installRelease (3 handlers)
-[GIN-debug] PUT    /api/namespaces/:namespace/releases/:release --> main.upgradeRelease (3 handlers)
-[GIN-debug] DELETE /api/namespaces/:namespace/releases/:release --> main.uninstallRelease (3 handlers)
-[GIN-debug] PUT    /api/namespaces/:namespace/releases/:release/versions/:reversion --> main.rollbackRelease (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release/status --> main.getReleaseStatus (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release/histories --> main.listReleaseHistories (3 handlers)
+$ ./helm-wrapper --config </path/to/config.yaml> --kubeconfig </path/to/kubeconfig>
 ```
 
 > 启动时会先初始化 repo，因此根据 repo 本身的大小或者网络因素，会耗费些时间

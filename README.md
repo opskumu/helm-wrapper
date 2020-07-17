@@ -73,7 +73,7 @@ PUT Body:
     - `GET`
     - `/api/namespaces/:namespace/releases/:release`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | info | support all/hooks/manifest/notes/values | 
 
@@ -85,7 +85,7 @@ PUT Body:
     - `GET`
     - `/api/charts`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | chart  | chart name, required|
 | info   | support readme/values/chart |
@@ -95,7 +95,7 @@ PUT Body:
     - `GET`
     - `/api/repositories/charts`
 
-| Params | Name |
+| Params | Description |
 | :- | :- |
 | keyword | search keyword，required |
 | version | chart version |
@@ -108,6 +108,18 @@ PUT Body:
 + helm env
     - `GET`
     - `/api/envs`
+
++ upload chart
+    - `POST`
+    - `/api/charts/upload`
+
+| Params | Description |
+| :- | :- |
+| chart | upload chart file, with suffix .tgz |
+
++ list local charts
+    - `GET`
+    - `/api/charts/upload`
 
 > __Notes:__ helm-wrapper is Alpha status, no more test
 
@@ -162,6 +174,7 @@ pflag: help requested
 
 ```
 $ cat config-example.yaml
+uploadPath: /tmp/charts
 helmRepos:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
@@ -172,24 +185,5 @@ helmRepos:
 ### Run
 
 ```
-$ ./helm-wrapper --config config-example.yaml
-[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
-
-[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
- - using env:   export GIN_MODE=release
- - using code:  gin.SetMode(gin.ReleaseMode)
-
-[GIN-debug] GET    /                         --> main.main.func1 (3 handlers)
-[GIN-debug] GET    /api/envs                 --> main.getHelmEnvs (3 handlers)
-[GIN-debug] GET    /api/repositories/charts  --> main.listRepoCharts (3 handlers)
-[GIN-debug] PUT    /api/repositories         --> main.updateRepositories (3 handlers)
-[GIN-debug] GET    /api/charts               --> main.showChartInfo (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases --> main.listReleases (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release --> main.showReleaseInfo (3 handlers)
-[GIN-debug] POST   /api/namespaces/:namespace/releases/:release --> main.installRelease (3 handlers)
-[GIN-debug] PUT    /api/namespaces/:namespace/releases/:release --> main.upgradeRelease (3 handlers)
-[GIN-debug] DELETE /api/namespaces/:namespace/releases/:release --> main.uninstallRelease (3 handlers)
-[GIN-debug] PUT    /api/namespaces/:namespace/releases/:release/versions/:reversion --> main.rollbackRelease (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release/status --> main.getReleaseStatus (3 handlers)
-[GIN-debug] GET    /api/namespaces/:namespace/releases/:release/histories --> main.listReleaseHistories (3 handlers)
+$ ./helm-wrapper --config </path/to/config.yaml> --kubeconfig </path/to/kubeconfig>
 ```

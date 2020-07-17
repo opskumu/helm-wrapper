@@ -48,7 +48,12 @@ func RegisterRouter(router *gin.Engine) {
 	// helm chart
 	charts := router.Group("/api/charts")
 	{
+		// helm show
 		charts.GET("", showChartInfo)
+		// upload chart
+		charts.POST("/upload", uploadChart)
+		// list uploaded charts
+		charts.GET("/upload", listUploadedCharts)
 	}
 
 	// helm release
