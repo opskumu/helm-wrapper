@@ -30,6 +30,16 @@ func findReadme(files []*chart.File) (file *chart.File) {
 
 func showChartInfo(c *gin.Context) {
 	name := c.Query("chart")
+	if name == "" {
+		respErr(c, fmt.Errorf("chart name can not be empty"))
+		return
+	}
+	// local charts with abs path *.tgz
+	splitChart := strings.Split(name, ".")
+	if splitChart[len(splitChart)-1] == "tgz" {
+		name = helmConfig.UploadPath + "/" + name
+	}
+
 	info := c.Query("info") // readme, values, chart
 	version := c.Query("version")
 
