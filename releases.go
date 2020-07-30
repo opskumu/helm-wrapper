@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -72,6 +74,29 @@ type releaseOptions struct {
 	Install       bool `json:"install"`
 	Recreate      bool `json:"recreate"`
 	CleanupOnFail bool `json:"cleanup_on_fail"`
+}
+
+// helm List struct
+type releaseListOptions struct {
+	// All ignores the limit/offset
+	All bool `json:"all"`
+	// AllNamespaces searches across namespaces
+	AllNamespaces bool `json:"all_namespaces"`
+	// Overrides the default lexicographic sorting
+	ByDate      bool `json:"by_date"`
+	SortReverse bool `json:"sort_reverse"`
+	// Limit is the number of items to return per Run()
+	Limit int `json:"limit"`
+	// Offset is the starting index for the Run() call
+	Offset int `json:"offset"`
+	// Filter is a filter that is applied to the results
+	Filter       string `json:"filter"`
+	Uninstalled  bool   `json:"uninstalled"`
+	Superseded   bool   `json:"superseded"`
+	Uninstalling bool   `json:"uninstalling"`
+	Deployed     bool   `json:"deployed"`
+	Failed       bool   `json:"failed"`
+	Pending      bool   `json:"pending"`
 }
 
 func formatChartname(c *chart.Chart) string {
@@ -390,13 +415,8 @@ func upgradeRelease(c *gin.Context) {
 
 	var options releaseOptions
 	err := c.BindJSON(&options)
-	if err != nil {
-		if err != io.EOF {
-			respErr(c, err)
-			return
-		}
-
-		respErr(c, fmt.Errorf("upgrade options can not be empty"))
+	if err != nil && err != io.EOF {
+		respErr(c, err)
 		return
 	}
 
@@ -464,8 +484,38 @@ func listReleases(c *gin.Context) {
 		return
 	}
 
+	var options releaseListOptions
+	err = c.BindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
+
 	client := action.NewList(actionConfig)
-	client.Deployed = true
+
+	// merge list options
+	client.All = options.All
+	client.AllNamespaces = options.AllNamespaces
+	if client.AllNamespaces {
+		err = actionConfig.Init(settings.RESTClientGetter(), "", os.Getenv("HELM_DRIVER"), glog.Infof)
+		if err != nil {
+			respErr(c, err)
+			return
+		}
+	}
+	client.ByDate = options.ByDate
+	client.SortReverse = options.SortReverse
+	client.Limit = options.Limit
+	client.Offset = options.Offset
+	client.Filter = options.Filter
+	client.Uninstalled = options.Uninstalled
+	client.Superseded = options.Superseded
+	client.Uninstalling = options.Uninstalling
+	client.Deployed = options.Deployed
+	client.Failed = options.Failed
+	client.Pending = options.Pending
+	client.SetStateMask()
+
 	results, err := client.Run()
 	if err != nil {
 		respErr(c, err)
