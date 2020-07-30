@@ -70,6 +70,27 @@ PUT Body:
 + helm list
     - `GET`
     - `/api/namespaces/:namespace/releases`
+
+Body:
+
+```
+{
+    "all": false,               // `--all`
+    "all_namespaces": false,    // `--all-namespaces`
+    "by_date": false,           // `--date`
+    "sort_reverse": false,      // `--reverse`
+    "limit":  ,                 // `--max`
+    "offset": ,                 // `--offset`
+    "filter": "",               // `--filter`
+    "uninstalled": false,       // `--uninstalled`
+    "uninstalling": false,      // `--uninstalling`
+    "superseded": false,        // `--superseded`
+    "failed": false,            // `--failed`
+    "deployed": false,          // `--deployed`
+    "pending": false,           // `--pending`
+}
+```
+
 + helm get
     - `GET`
     - `/api/namespaces/:namespace/releases/:release`
