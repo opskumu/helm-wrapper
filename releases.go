@@ -48,8 +48,6 @@ type releaseElement struct {
 	// TODO: Test Suite?
 }
 
-type releaseList []releaseElement
-
 type releaseOptions struct {
 	// common
 	DryRun          bool          `json:"dry_run"`
@@ -268,7 +266,7 @@ func installRelease(c *gin.Context) {
 	}
 
 	var options releaseOptions
-	err := c.BindJSON(&options)
+	err := c.ShouldBindJSON(&options)
 	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
@@ -414,7 +412,7 @@ func upgradeRelease(c *gin.Context) {
 	}
 
 	var options releaseOptions
-	err := c.BindJSON(&options)
+	err := c.ShouldBindJSON(&options)
 	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
@@ -485,7 +483,7 @@ func listReleases(c *gin.Context) {
 	}
 
 	var options releaseListOptions
-	err = c.BindJSON(&options)
+	err = c.ShouldBindJSON(&options)
 	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
