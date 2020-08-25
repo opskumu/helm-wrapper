@@ -87,7 +87,7 @@ func main() {
 	// router
 	router := gin.Default()
 	router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Welcom helm wrapper server")
+		c.String(http.StatusOK, "Welcome helm wrapper server")
 	})
 
 	// register router
