@@ -217,3 +217,13 @@ $ ./helm-wrapper --config </path/to/config.yaml> --kubeconfig </path/to/kubeconf
 ```
 
 > 启动时会先初始化 repo，因此根据 repo 本身的大小或者网络因素，会耗费些时间
+
+#### 运行在 Kubernetes 集群中
+
+替换 `deployment/deployment.yaml` 中 image 字段为你正确的 helm-wrapper 镜像地址即可，然后执行命令部署：
+
+```
+kubectl create -f ./deployment
+```
+
+> __注：__ 以上操作会创建 RBAC 相关，因此不需要在构建镜像的时候额外添加 kubeconfig 文件，默认会拥有相关的权限
