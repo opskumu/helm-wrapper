@@ -208,3 +208,13 @@ helmRepos:
 ```
 $ ./helm-wrapper --config </path/to/config.yaml> --kubeconfig </path/to/kubeconfig>
 ```
+
+#### Deploy in Kubernetes Cluster
+
+replace deployment/deployment.yaml with helm-wrapper image, then:
+
+```
+kubeclt create -f ./deployment 
+```
+
+> __Noets:__ with deployment/rbac.yaml, you not need `--kubeconfig`
