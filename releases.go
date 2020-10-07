@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -63,7 +62,6 @@ type releaseOptions struct {
 	Values          string        `json:"values"`
 	SetValues       []string      `json:"set"`
 	SetStringValues []string      `json:"set_string"`
-	ValuesFile 	string        `json:"values_file"`
 
 	// only install
 	CreateNamespace  bool `json:"create_namespace"`
@@ -119,19 +117,6 @@ func formatAppVersion(c *chart.Chart) string {
 
 func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	vals := map[string]interface{}{}
-	if _, err := os.Stat(options.ValuesFile); err == nil {
-		yamlFile, err := ioutil.ReadFile(options.ValuesFile)
-		if err != nil {
-			return vals, fmt.Errorf("failed reading values file")
-		}
-		err = yaml.Unmarshal(yamlFile, &vals)
-		if err != nil {
-			return vals, fmt.Errorf("failed parsing values file")
-		}
-	} else{
-		return vals, fmt.Errorf("failed values file is missing")
-	}
-
 	err := yaml.Unmarshal([]byte(options.Values), &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
