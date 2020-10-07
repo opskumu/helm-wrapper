@@ -25,6 +25,7 @@ POST Body:
     "create_namespace": false,  // `--create-namespace`
     "dependency_update": false, // `--dependency-update`
     "values": "",               // `--values`
+    "values=file": "",          // `-f`
     "set": [],                  // `--set`
     "set_string": []            // `--set-string`
 }
@@ -56,6 +57,7 @@ PUT Body:
     "recreate": false,          // `--recreate`
     "cleanup_on_fail": false,   // `--cleanup-on-fail`
     "values": "",               // `--values`
+    "values=file": "",          // `-f`
     "set": [],                  // `--set`
     "set_string": []            // `--set-string`
 }
