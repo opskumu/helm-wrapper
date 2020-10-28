@@ -22,16 +22,19 @@ spec:
     spec:
       serviceAccountName: helm-wrapper
       containers:
-      - image: <image>
-        imagePullPolicy: IfNotPresent
-        name: helm-wrapper
-        readinessProbe:
-          failureThreshold: 3
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          successThreshold: 1
-          tcpSocket:
-            port: 8080
-          timeoutSeconds: 1
+        - image: <image>
+          imagePullPolicy: IfNotPresent
+          name: helm-wrapper
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            tcpSocket:
+              port: 8080
+            timeoutSeconds: 1
+          ports:
+            - name: helm-wrapper
+              containerPort: 8080
       dnsPolicy: ClusterFirst
       restartPolicy: Always
