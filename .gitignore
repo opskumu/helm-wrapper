@@ -13,3 +13,5 @@
 
 # vim swap file
 *.swp
+
+.idea

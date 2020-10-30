@@ -6,6 +6,15 @@ helm-wrapper is a helm3 HTTP wrapper with [helm Go SDK](https://helm.sh/docs/top
 
 ## Support API
 
+
+* If there are some APIs need to support multiple clusters,you can use the parameters below
+
+| Params | Description |
+| :- | :- |
+| kube_context | Support distinguish multiple clusters by the`kube_context`  |
+
+
+
 + helm install
     - `POST`
     - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
@@ -35,6 +44,8 @@ POST Body:
 + helm uninstall
     - `DELETE`
     - `/api/namespaces/:namespace/releases/:release`
+
+
 + helm upgrade
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
@@ -66,6 +77,8 @@ PUT Body:
 + helm rollback
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release/versions/:reversion`
+
+
 + helm list
     - `GET`
     - `/api/namespaces/:namespace/releases`
@@ -86,7 +99,7 @@ Body:
     "superseded": false,        // `--superseded`
     "failed": false,            // `--failed`
     "deployed": false,          // `--deployed`
-    "pending": false,           // `--pending`
+    "pending": false            // `--pending`
 }
 ```
 
@@ -96,11 +109,12 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | support all/hooks/manifest/notes/values | 
+| info | support all/hooks/manifest/notes/values |
 
 + helm release history
     - `GET`
     - `/api/namespaces/:namespace/releases/:release/histories`
+
 
 + helm show
     - `GET`
