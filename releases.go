@@ -198,6 +198,7 @@ func showReleaseInfo(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	info := c.Query("info")
+	kubeContext := c.Query("kube_context")
 	infos := []string{"all", "hooks", "manifest", "notes", "values"}
 	infoMap := map[string]bool{}
 	for _, i := range infos {
@@ -207,8 +208,7 @@ func showReleaseInfo(c *gin.Context) {
 		respErr(c, fmt.Errorf("bad info %s, release info only support all/hooks/manifest/notes/values", info))
 		return
 	}
-
-	actionConfig, err := actionConfigInit(namespace)
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -253,16 +253,17 @@ func showReleaseInfo(c *gin.Context) {
 func installRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	chart := c.Query("chart")
-	if chart == "" {
+	aimChart := c.Query("chart")
+	kubeContext := c.Query("kube_context")
+	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
 	}
 
 	// install with local uploaded charts, *.tgz
-	splitChart := strings.Split(chart, ".")
+	splitChart := strings.Split(aimChart, ".")
 	if splitChart[len(splitChart)-1] == "tgz" {
-		chart = helmConfig.UploadPath + "/" + chart
+		aimChart = helmConfig.UploadPath + "/" + aimChart
 	}
 
 	var options releaseOptions
@@ -278,7 +279,7 @@ func installRelease(c *gin.Context) {
 		return
 	}
 
-	actionConfig, err := actionConfigInit(namespace)
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -300,7 +301,7 @@ func installRelease(c *gin.Context) {
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
 
-	cp, err := client.ChartPathOptions.LocateChart(chart, settings)
+	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
 		respErr(c, err)
 		return
@@ -355,7 +356,9 @@ func installRelease(c *gin.Context) {
 func uninstallRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	actionConfig, err := actionConfigInit(namespace)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -374,13 +377,14 @@ func rollbackRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	reversionStr := c.Param("reversion")
+	kubeContext := c.Query("kube_context")
 	reversion, err := strconv.Atoi(reversionStr)
 	if err != nil {
 		respErr(c, err)
 		return
 	}
 
-	actionConfig, err := actionConfigInit(namespace)
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -392,23 +396,23 @@ func rollbackRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-
 	respOK(c, nil)
 }
 
 func upgradeRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	chart := c.Query("chart")
-	if chart == "" {
+	aimChart := c.Query("chart")
+	kubeContext := c.Query("kube_context")
+	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
 	}
 
 	// upgrade with local uploaded charts *.tgz
-	splitChart := strings.Split(chart, ".")
+	splitChart := strings.Split(aimChart, ".")
 	if splitChart[len(splitChart)-1] == "tgz" {
-		chart = helmConfig.UploadPath + "/" + chart
+		aimChart = helmConfig.UploadPath + "/" + aimChart
 	}
 
 	var options releaseOptions
@@ -417,14 +421,12 @@ func upgradeRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-
 	vals, err := mergeValues(options)
 	if err != nil {
 		respErr(c, err)
 		return
 	}
-
-	actionConfig, err := actionConfigInit(namespace)
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -447,7 +449,7 @@ func upgradeRelease(c *gin.Context) {
 	client.Recreate = options.Recreate
 	client.CleanupOnFail = options.CleanupOnFail
 
-	cp, err := client.ChartPathOptions.LocateChart(chart, settings)
+	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
 		respErr(c, err)
 		return
@@ -476,15 +478,15 @@ func upgradeRelease(c *gin.Context) {
 
 func listReleases(c *gin.Context) {
 	namespace := c.Param("namespace")
-	actionConfig, err := actionConfigInit(namespace)
-	if err != nil {
+	kubeContext := c.Query("kube_context")
+	var options releaseListOptions
+	err := c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
 	}
-
-	var options releaseListOptions
-	err = c.ShouldBindJSON(&options)
-	if err != nil && err != io.EOF {
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
 		respErr(c, err)
 		return
 	}
@@ -532,7 +534,9 @@ func listReleases(c *gin.Context) {
 func getReleaseStatus(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	actionConfig, err := actionConfigInit(namespace)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -552,7 +556,9 @@ func getReleaseStatus(c *gin.Context) {
 func listReleaseHistories(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	actionConfig, err := actionConfigInit(namespace)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
 		return

@@ -38,7 +38,10 @@ func main() {
 		config     string
 	)
 
-	flag.Set("logtostderr", "true")
+	err := flag.Set("logtostderr", "true")
+	if err != nil {
+		glog.Fatalln(err)
+	}
 	pflag.CommandLine.StringVar(&listenHost, "addr", "0.0.0.0", "server listen addr")
 	pflag.CommandLine.StringVar(&listenPort, "port", "8080", "server listen port")
 	pflag.CommandLine.StringVar(&config, "config", "config.yaml", "helm wrapper config")
@@ -104,12 +107,12 @@ func main() {
 		}
 	}()
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 2)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	glog.Infoln("Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	srv.Shutdown(ctx)
+	_ = srv.Shutdown(ctx)
 }

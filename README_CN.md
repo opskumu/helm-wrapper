@@ -4,6 +4,12 @@ Helm3 摒弃了 Helm2 的 Tiller 架构，使用纯命令行的方式执行相�
 
 ## Support API
 
+* 如果某些API需要支持多个集群，则可以使用以下参数
+
+| Params | Description |
+| :- | :- |
+| kube_context | 支持指定kube_context来区分不同集群 |
+
 helm 原生命令行和相关 API 对应关系：
 
 + helm install
@@ -35,6 +41,8 @@ POST Body:
 + helm uninstall
     - `DELETE`
     - `/api/namespaces/:namespace/releases/:release`
+
+
 + helm upgrade
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
@@ -67,6 +75,8 @@ PUT Body:
 + helm rollback
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release/versions/:reversion`
+
+
 + helm list
     - `GET`
     - `/api/namespaces/:namespace/releases`
@@ -87,7 +97,7 @@ Body:
     "superseded": false,        // `--superseded`
     "failed": false,            // `--failed`
     "deployed": false,          // `--deployed`
-    "pending": false,           // `--pending`
+    "pending": false            // `--pending`
 }
 ```
 
@@ -97,11 +107,12 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | 支持 all/hooks/manifest/notes/values 信息 | 
+| info | 支持 all/hooks/manifest/notes/values 信息 |
 
 + helm release history
     - `GET`
     - `/api/namespaces/:namespace/releases/:release/histories`
+
 
 + helm show
     - `GET`
