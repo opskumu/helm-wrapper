@@ -90,7 +90,7 @@ func initRepository(c *repo.Entry) error {
 	defer cancel()
 	locked, err := fileLock.TryLockContext(lockCtx, time.Second)
 	if err == nil && locked {
-		defer fileLock.Unlock()
+		SafeCloser(fileLock, &err)
 	}
 	if err != nil {
 		return err
@@ -189,6 +189,10 @@ func listRepoCharts(c *gin.Context) {
 		res = index.All()
 	} else {
 		res, err = index.Search(keyword, searchMaxScore, false)
+		if err != nil {
+			respErr(c, err)
+			return
+		}
 	}
 
 	search.SortScore(res)
@@ -212,4 +216,11 @@ func listRepoCharts(c *gin.Context) {
 	}
 
 	respOK(c, chartList)
+}
+
+func SafeCloser(fileLock *flock.Flock, err *error) {
+	if fileErr := fileLock.Unlock(); fileErr != nil && *err == nil {
+		*err = fileErr
+		glog.Error(fileErr)
+	}
 }
