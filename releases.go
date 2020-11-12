@@ -198,6 +198,9 @@ func showReleaseInfo(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	info := c.Query("info")
+	if info == "" {
+		info = "all"
+	}
 	kubeContext := c.Query("kube_context")
 	infos := []string{"all", "hooks", "manifest", "notes", "values"}
 	infoMap := map[string]bool{}

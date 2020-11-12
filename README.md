@@ -109,7 +109,7 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | support all/hooks/manifest/notes/values |
+| info | support all/hooks/manifest/notes/values, default all |
 
 + helm release history
     - `GET`
@@ -123,7 +123,7 @@ Body:
 | Params | Description |
 | :- | :- |
 | chart  | chart name, required|
-| info   | support readme/values/chart |
+| info   | support all/readme/values/chart, default all |
 | version | --version |
 
 + helm search repo
