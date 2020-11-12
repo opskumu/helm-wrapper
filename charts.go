@@ -8,6 +8,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 var readmeFileNames = []string{"readme.md", "readme.txt", "readme"}
@@ -40,7 +41,10 @@ func showChartInfo(c *gin.Context) {
 		name = helmConfig.UploadPath + "/" + name
 	}
 
-	info := c.Query("info") // readme, values, chart
+	info := c.Query("info") // all, readme, values, chart
+	if info == "" {
+		info = string(action.ShowAll)
+	}
 	version := c.Query("version")
 
 	client := action.NewShow(action.ShowAll)
@@ -51,6 +55,8 @@ func showChartInfo(c *gin.Context) {
 		client.OutputFormat = action.ShowReadme
 	} else if info == string(action.ShowValues) {
 		client.OutputFormat = action.ShowValues
+	} else if info == string(action.ShowAll) {
+		client.OutputFormat = action.ShowAll
 	} else {
 		respErr(c, fmt.Errorf("bad info %s, chart info only support readme/values/chart", info))
 		return
@@ -73,6 +79,21 @@ func showChartInfo(c *gin.Context) {
 		return
 	}
 	if client.OutputFormat == action.ShowValues {
+		var values string
+		for _, v := range chrt.Raw {
+			if v.Name == chartutil.ValuesfileName {
+				values = string(v.Data)
+				break
+			}
+		}
+		respOK(c, values)
+		return
+	}
+	if client.OutputFormat == action.ShowReadme {
+		respOK(c, string(findReadme(chrt.Files).Data))
+		return
+	}
+	if client.OutputFormat == action.ShowAll {
 		values := make([]*file, 0, len(chrt.Raw))
 		for _, v := range chrt.Raw {
 			values = append(values, &file{
@@ -81,10 +102,6 @@ func showChartInfo(c *gin.Context) {
 			})
 		}
 		respOK(c, values)
-		return
-	}
-	if client.OutputFormat == action.ShowReadme {
-		respOK(c, string(findReadme(chrt.Files).Data))
 		return
 	}
 }

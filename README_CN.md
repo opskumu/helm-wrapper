@@ -107,7 +107,7 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | 支持 all/hooks/manifest/notes/values 信息 |
+| info | 支持 all/hooks/manifest/notes/values 信息，默认为 all |
 
 + helm release history
     - `GET`
@@ -121,7 +121,7 @@ Body:
 | Params | Description |
 | :- | :- |
 | chart  | 指定 chart 名，必填 |
-| info   | 支持 readme/values/chart 信息 |
+| info   | 支持 all/readme/values/chart 信息，默认为 all |
 | version | 支持版本指定，同命令行 |
 
 + helm search repo
