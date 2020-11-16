@@ -11,6 +11,9 @@ build:
 build-linux:
 	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME}
 
+build-windows:
+	GOOS=windows GOARCH=386 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME} 
+
 # build docker image
 build-docker:
 	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME}
