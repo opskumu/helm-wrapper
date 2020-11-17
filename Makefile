@@ -5,18 +5,18 @@ GOPATH = $(shell go env GOPATH)
 LDFLAGS="-s -w"
 
 build:
-	go build -ldflags ${LDFLAGS} -o ${BINARY_NAME} 
+	go build -ldflags ${LDFLAGS} -o bin/${BINARY_NAME} 
 
 # cross compilation
 build-linux:
-	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME}
+	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o bin/${BINARY_NAME}
 
 build-windows:
-	GOOS=windows GOARCH=386 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME} 
+	GOOS=windows GOARCH=386 go build -ldflags ${LDFLAGS} -o bin/${BINARY_NAME} 
 
 # build docker image
 build-docker:
-	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o ${BINARY_NAME}
+	GOOS=linux GOARCH=amd64 go build -ldflags ${LDFLAGS} -o bin/${BINARY_NAME}
 	docker build -t helm-wrapper:`git rev-parse --short HEAD` .
 
 .PHONY: golangci-lint
