@@ -107,7 +107,8 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | 支持 all/hooks/manifest/notes/values 信息，默认为 all |
+| info | 支持 hooks/manifest/notes/values 信息，默认为 values |
+| output | values 输出格式（仅当 info=values 时有效），支持 json/yaml，默认为 json |
 
 + helm release history
     - `GET`

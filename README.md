@@ -109,7 +109,8 @@ Body:
 
 | Params | Description |
 | :- | :- |
-| info | support all/hooks/manifest/notes/values, default all |
+| info | support hooks/manifest/notes/values, default values |
+| output | get values output format (only info==values), support json/yaml, default json |
 
 + helm release history
     - `GET`
