@@ -62,6 +62,7 @@ type releaseOptions struct {
 	Values          string        `json:"values"`
 	SetValues       []string      `json:"set"`
 	SetStringValues []string      `json:"set_string"`
+	ChartPathOptions
 
 	// only install
 	CreateNamespace  bool `json:"create_namespace"`
@@ -72,6 +73,20 @@ type releaseOptions struct {
 	Install       bool `json:"install"`
 	Recreate      bool `json:"recreate"`
 	CleanupOnFail bool `json:"cleanup_on_fail"`
+}
+
+// ChartPathOptions captures common options used for controlling chart paths
+type ChartPathOptions struct {
+	CaFile                string `json:"ca_file"`              // --ca-file
+	CertFile              string `json:"cert_file"`            // --cert-file
+	KeyFile               string `json:"key_file"`             // --key-file
+	InsecureSkipTLSverify bool   `json:"insecure_skip_verify"` // --insecure-skip-verify
+	Keyring               string `json:"keyring"`              // --keyring
+	Password              string `json:"password"`             // --password
+	RepoURL               string `json:"repo"`                 // --repo
+	Username              string `json:"username"`             // --username
+	Verify                bool   `json:"verify"`               // --verify
+	Version               string `json:"version"`              // --version
 }
 
 // helm List struct
@@ -321,6 +336,18 @@ func installRelease(c *gin.Context) {
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
 
+	// merge chart path options
+	client.ChartPathOptions.CaFile = options.ChartPathOptions.CaFile
+	client.ChartPathOptions.CertFile = options.ChartPathOptions.CertFile
+	client.ChartPathOptions.KeyFile = options.ChartPathOptions.KeyFile
+	client.ChartPathOptions.InsecureSkipTLSverify = options.ChartPathOptions.InsecureSkipTLSverify
+	client.ChartPathOptions.Keyring = options.ChartPathOptions.Keyring
+	client.ChartPathOptions.Password = options.ChartPathOptions.Password
+	client.ChartPathOptions.RepoURL = options.ChartPathOptions.RepoURL
+	client.ChartPathOptions.Username = options.ChartPathOptions.Username
+	client.ChartPathOptions.Verify = options.ChartPathOptions.Verify
+	client.ChartPathOptions.Version = options.ChartPathOptions.Version
+
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
 		respErr(c, err)
@@ -468,6 +495,18 @@ func upgradeRelease(c *gin.Context) {
 	client.Install = options.Install
 	client.Recreate = options.Recreate
 	client.CleanupOnFail = options.CleanupOnFail
+
+	// merge chart path options
+	client.ChartPathOptions.CaFile = options.ChartPathOptions.CaFile
+	client.ChartPathOptions.CertFile = options.ChartPathOptions.CertFile
+	client.ChartPathOptions.KeyFile = options.ChartPathOptions.KeyFile
+	client.ChartPathOptions.InsecureSkipTLSverify = options.ChartPathOptions.InsecureSkipTLSverify
+	client.ChartPathOptions.Keyring = options.ChartPathOptions.Keyring
+	client.ChartPathOptions.Password = options.ChartPathOptions.Password
+	client.ChartPathOptions.RepoURL = options.ChartPathOptions.RepoURL
+	client.ChartPathOptions.Username = options.ChartPathOptions.Username
+	client.ChartPathOptions.Verify = options.ChartPathOptions.Verify
+	client.ChartPathOptions.Version = options.ChartPathOptions.Version
 
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {

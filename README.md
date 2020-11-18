@@ -35,7 +35,17 @@ POST Body:
     "dependency_update": false, // `--dependency-update`
     "values": "",               // `--values`
     "set": [],                  // `--set`
-    "set_string": []            // `--set-string`
+    "set_string": [],           // `--set-string`
+    "ca_file": "",              // `--ca-file`
+    "cert_file": "",            // `--cert-file`
+    "key_file": "",             // `--key-file`
+    "insecure_skip_verify": "", // `--insecure-skip-verify`
+    "keyring": "",              // `--keyring`
+    "password": "",             // `--password`
+    "repo": "",                 // `--repo`
+    "username": "",             // `--username`
+    "verify": false,            // `--verify`
+    "version": ""               // `--version`
 }
 ```
 
@@ -68,7 +78,17 @@ PUT Body:
     "cleanup_on_fail": false,   // `--cleanup-on-fail`
     "values": "",               // `--values`
     "set": [],                  // `--set`
-    "set_string": []            // `--set-string`
+    "set_string": [],           // `--set-string`
+    "ca_file": "",              // `--ca-file`
+    "cert_file": "",            // `--cert-file`
+    "key_file": "",             // `--key-file`
+    "insecure_skip_verify": "", // `--insecure-skip-verify`
+    "keyring": "",              // `--keyring`
+    "password": "",             // `--password`
+    "repo": "",                 // `--repo`
+    "username": "",             // `--username`
+    "verify": false,            // `--verify`
+    "version": ""               // `--version`
 }
 ```
 
@@ -85,7 +105,7 @@ PUT Body:
 
 Body:
 
-```
+``` json
 {
     "all": false,               // `--all`
     "all_namespaces": false,    // `--all-namespaces`
