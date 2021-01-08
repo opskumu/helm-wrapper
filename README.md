@@ -98,6 +98,19 @@ PUT Body:
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release/versions/:reversion`
 
+PUT Body (optional):
+
+``` json
+{
+    "dry_run": false,           // `--dry-run`
+    "disable_hooks": false,     // `--no-hooks`
+    "wait": false,              // `--wait`
+    "force": false,             // `--force`
+    "recreate": false,          // `--recreate`
+    "cleanup_on_fail": false,   // `--cleanup-on-fail`
+    "history_max":              // `--history-max` int
+}
+```
 
 + helm list
     - `GET`

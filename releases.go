@@ -50,27 +50,32 @@ type releaseElement struct {
 
 type releaseOptions struct {
 	// common
-	DryRun          bool          `json:"dry_run"`
-	DisableHooks    bool          `json:"disable_hooks"`
-	Wait            bool          `json:"wait"`
-	Devel           bool          `json:"devel"`
-	Description     string        `json:"description"`
-	Atomic          bool          `json:"atomic"`
-	SkipCRDs        bool          `json:"skip_crds"`
-	SubNotes        bool          `json:"sub_notes"`
-	Timeout         time.Duration `json:"timeout"`
-	Values          string        `json:"values"`
-	SetValues       []string      `json:"set"`
-	SetStringValues []string      `json:"set_string"`
-	ChartPathOptions
+	DryRun           bool          `json:"dry_run"`
+	DisableHooks     bool          `json:"disable_hooks"`
+	Wait             bool          `json:"wait"`
+	Devel            bool          `json:"devel"`
+	Description      string        `json:"description"`
+	Atomic           bool          `json:"atomic"`
+	SkipCRDs         bool          `json:"skip_crds"`
+	SubNotes         bool          `json:"sub_notes"`
+	Timeout          time.Duration `json:"timeout"`
+	Values           string        `json:"values"`
+	SetValues        []string      `json:"set"`
+	SetStringValues  []string      `json:"set_string"`
+	ChartPathOptions `json:"chart_path_options"`
 
 	// only install
 	CreateNamespace  bool `json:"create_namespace"`
 	DependencyUpdate bool `json:"dependency_update"`
 
 	// only upgrade
+	Install bool `json:"install"`
+
+	// only rollback
+	MaxHistory int `json:"history_max"`
+
+	// upgrade or rollback
 	Force         bool `json:"force"`
-	Install       bool `json:"install"`
 	Recreate      bool `json:"recreate"`
 	CleanupOnFail bool `json:"cleanup_on_fail"`
 }
@@ -431,6 +436,13 @@ func rollbackRelease(c *gin.Context) {
 		return
 	}
 
+	var options releaseOptions
+	err = c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
+
 	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
 	if err != nil {
 		respErr(c, err)
@@ -438,6 +450,17 @@ func rollbackRelease(c *gin.Context) {
 	}
 	client := action.NewRollback(actionConfig)
 	client.Version = reversion
+
+	// merge rollback options
+	client.CleanupOnFail = options.CleanupOnFail
+	client.Wait = options.Wait
+	client.DryRun = options.DryRun
+	client.DisableHooks = options.DisableHooks
+	client.Force = options.Force
+	client.Recreate = options.Recreate
+	client.MaxHistory = options.MaxHistory
+	client.Timeout = options.Timeout
+
 	err = client.Run(name)
 	if err != nil {
 		respErr(c, err)
