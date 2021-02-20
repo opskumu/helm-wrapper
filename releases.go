@@ -50,19 +50,19 @@ type releaseElement struct {
 
 type releaseOptions struct {
 	// common
-	DryRun           bool          `json:"dry_run"`
-	DisableHooks     bool          `json:"disable_hooks"`
-	Wait             bool          `json:"wait"`
-	Devel            bool          `json:"devel"`
-	Description      string        `json:"description"`
-	Atomic           bool          `json:"atomic"`
-	SkipCRDs         bool          `json:"skip_crds"`
-	SubNotes         bool          `json:"sub_notes"`
-	Timeout          time.Duration `json:"timeout"`
-	Values           string        `json:"values"`
-	SetValues        []string      `json:"set"`
-	SetStringValues  []string      `json:"set_string"`
-	ChartPathOptions `json:",inline"`
+	DryRun          bool          `json:"dry_run"`
+	DisableHooks    bool          `json:"disable_hooks"`
+	Wait            bool          `json:"wait"`
+	Devel           bool          `json:"devel"`
+	Description     string        `json:"description"`
+	Atomic          bool          `json:"atomic"`
+	SkipCRDs        bool          `json:"skip_crds"`
+	SubNotes        bool          `json:"sub_notes"`
+	Timeout         time.Duration `json:"timeout"`
+	Values          string        `json:"values"`
+	SetValues       []string      `json:"set"`
+	SetStringValues []string      `json:"set_string"`
+	ChartPathOptions
 
 	// only install
 	CreateNamespace  bool `json:"create_namespace"`
