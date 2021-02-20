@@ -62,7 +62,7 @@ type releaseOptions struct {
 	Values           string        `json:"values"`
 	SetValues        []string      `json:"set"`
 	SetStringValues  []string      `json:"set_string"`
-	ChartPathOptions `json:"chart_path_options"`
+	ChartPathOptions `json:",inline"`
 
 	// only install
 	CreateNamespace  bool `json:"create_namespace"`
