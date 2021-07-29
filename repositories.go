@@ -218,6 +218,20 @@ func listRepoCharts(c *gin.Context) {
 	respOK(c, chartList)
 }
 
+// get all Repositories
+func listRepositories(c *gin.Context){
+	var repos []RepoEntry
+	for _, r := range helmConfig.HelmRepos {
+		repos = append(repos,RepoEntry{
+			Name: r.Name,
+			URL: r.URL,
+			DisplayName: r.Name,
+		} )
+	}
+
+	respOK(c, repos)
+}
+
 func SafeCloser(fileLock *flock.Flock, err *error) {
 	if fileErr := fileLock.Unlock(); fileErr != nil && *err == nil {
 		*err = fileErr

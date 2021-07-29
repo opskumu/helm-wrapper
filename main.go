@@ -25,6 +25,14 @@ type HelmConfig struct {
 	HelmRepos  []*repo.Entry `yaml:"helmRepos"`
 }
 
+type RepoEntry struct {
+	Name                  string `json:"name"`
+	URL                   string `json:"url"`
+	Username              string `json:"username"`
+	Password              string `json:"password"`
+	DisplayName           string `json:"displayName"`
+}
+
 var (
 	settings          = cli.New()
 	defaultUploadPath = "/tmp/charts"

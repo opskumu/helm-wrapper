@@ -39,6 +39,8 @@ func RegisterRouter(router *gin.Engine) {
 	// helm repo
 	repositories := router.Group("/api/repositories")
 	{
+	    // get all helm repo
+		repositories.GET("/", listRepositories)
 		// helm search repo
 		repositories.GET("/charts", listRepoCharts)
 		// helm repo update
