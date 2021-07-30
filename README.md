@@ -170,6 +170,10 @@ Body:
 | version | chart version |
 | versions | if "true", all versions |
 
++ helm repo list
+    - `GET`
+    - `/api/repositories`
+
 + helm repo update
     - `PUT`
     - `/api/repositories`

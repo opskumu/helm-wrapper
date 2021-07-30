@@ -81,7 +81,7 @@ func main() {
 
 	// init repo
 	for _, c := range helmConfig.HelmRepos {
-		err = initRepository(c)
+		err = initRepos(c)
 		if err != nil {
 			glog.Fatalln(err)
 		}

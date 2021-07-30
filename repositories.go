@@ -77,7 +77,7 @@ func buildSearchIndex(version string) (*search.Index, error) {
 	return i, nil
 }
 
-func initRepository(c *repo.Entry) error {
+func initRepos(c *repo.Entry) error {
 	// Ensure the file directory exists as it is required for file locking
 	err := os.MkdirAll(filepath.Dir(settings.RepositoryConfig), os.ModePerm)
 	if err != nil && !os.IsExist(err) {
@@ -137,7 +137,7 @@ func updateChart(c *repo.Entry) error {
 	return nil
 }
 
-func updateRepositories(c *gin.Context) {
+func updateRepos(c *gin.Context) {
 	type errRepo struct {
 		Name string
 		Err  string
@@ -166,6 +166,22 @@ func updateRepositories(c *gin.Context) {
 	}
 
 	respOK(c, nil)
+}
+
+func listRepos(c *gin.Context) {
+	type repo struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	}
+	repos := []repo{}
+	for _, r := range helmConfig.HelmRepos {
+		repos = append(repos, repo{
+			r.Name,
+			r.URL,
+		})
+	}
+
+	respOK(c, repos)
 }
 
 func listRepoCharts(c *gin.Context) {
