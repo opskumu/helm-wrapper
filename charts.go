@@ -35,9 +35,10 @@ func showChartInfo(c *gin.Context) {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
 	}
+
 	// local charts with abs path *.tgz
 	splitChart := strings.Split(name, ".")
-	if splitChart[len(splitChart)-1] == "tgz" {
+	if splitChart[len(splitChart)-1] == "tgz" && !strings.Contains(name, ":") {
 		name = helmConfig.UploadPath + "/" + name
 	}
 

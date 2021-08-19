@@ -302,7 +302,7 @@ func installRelease(c *gin.Context) {
 
 	// install with local uploaded charts, *.tgz
 	splitChart := strings.Split(aimChart, ".")
-	if splitChart[len(splitChart)-1] == "tgz" {
+	if splitChart[len(splitChart)-1] == "tgz" && !strings.Contains(aimChart, ":") {
 		aimChart = helmConfig.UploadPath + "/" + aimChart
 	}
 
