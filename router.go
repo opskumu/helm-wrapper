@@ -56,6 +56,8 @@ func RegisterRouter(router *gin.Engine) {
 		charts.POST("/upload", uploadChart)
 		// list uploaded charts
 		charts.GET("/upload", listUploadedCharts)
+		// delete chart
+		charts.DELETE("/:chart", deleteChart)
 	}
 
 	// helm release
