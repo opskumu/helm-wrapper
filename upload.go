@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -55,4 +56,30 @@ func listUploadedCharts(c *gin.Context) {
 	}
 
 	respOK(c, charts)
+}
+
+func deleteChart(c *gin.Context) {
+	chart := c.Param("chart")
+	if chart == "" {
+		err := errors.New("chart must be not empty")
+		respErr(c, err)
+		return
+	}
+
+	filePath := helmConfig.UploadPath + "/" + chart
+	// not exist,ok
+	_, err := os.Stat(filePath)
+	if err != nil || os.IsNotExist(err) {
+		respOK(c, nil)
+		return
+	}
+
+	//delete chart from disk
+	err = os.Remove(filePath)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	respOK(c, nil)
 }
