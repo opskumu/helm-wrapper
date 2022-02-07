@@ -17,14 +17,14 @@ func respErr(c *gin.Context, err error) {
 	glog.Warningln(err)
 
 	c.JSON(http.StatusOK, &respBody{
-		Code:  1,
+		Code:  500,
 		Error: err.Error(),
 	})
 }
 
 func respOK(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, &respBody{
-		Code: 0,
+		Code: 200,
 		Data: data,
 	})
 }
@@ -79,5 +79,19 @@ func RegisterRouter(router *gin.Engine) {
 		releases.GET("/:release/status", getReleaseStatus)
 		// helm release history
 		releases.GET("/:release/histories", listReleaseHistories)
+	}
+
+	// Kubernetes Config File
+	kubeConfig := router.Group("/api/k8s/config")
+	{
+		kubeConfig.POST("/upload", uploadKubeConfig)
+	}
+
+	newRelease := router.Group("/api/namespaces/:namespace/releases/new")
+	{
+		// helm install
+		newRelease.POST("/install/:release", newInstallRelease)
+
+		newRelease.POST("/upgrade/:release", newUpgradeRelease)
 	}
 }

@@ -16,3 +16,4 @@ bin
 *.swp
 
 .idea
+/vendor/
