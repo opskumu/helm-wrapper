@@ -87,7 +87,7 @@ func RegisterRouter(router *gin.Engine) {
 		kubeConfig.POST("/upload", uploadKubeConfig)
 	}
 
-	newRelease := router.Group("/api/namespaces/:namespace/releases/new")
+	newRelease := router.Group("/api/namespaces/:namespace/releases/file")
 	{
 		// helm install
 		newRelease.POST("/install/:release", newInstallRelease)
