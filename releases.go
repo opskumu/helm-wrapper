@@ -575,7 +575,7 @@ func listReleases(c *gin.Context) {
 
 	client := action.NewList(actionConfig)
 
-	// merge list options
+	// merge listReleasesV2 options
 	client.All = options.All
 	client.AllNamespaces = options.AllNamespaces
 	if client.AllNamespaces {

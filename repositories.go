@@ -161,7 +161,7 @@ func updateRepos(c *gin.Context) {
 	wg.Wait()
 
 	if len(errRepoList) > 0 {
-		respErr(c, fmt.Errorf("error list: %v", errRepoList))
+		respErr(c, fmt.Errorf("error listReleasesV2: %v", errRepoList))
 		return
 	}
 

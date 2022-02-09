@@ -4,7 +4,7 @@ metadata:
   labels:
     app: helm-wrapper
   name: helm-wrapper
-  namespace: kube-system
+#  namespace: kube-system
 spec:
   replicas: 1
   selector:
@@ -21,8 +21,10 @@ spec:
         app: helm-wrapper
     spec:
       serviceAccountName: helm-wrapper
+      imagePullSecrets:
+        - name: csp.docker.iec.io
       containers:
-        - image: <image>
+        - image: csp.docker.iec.io/helm-wrapper:v1.1
           imagePullPolicy: IfNotPresent
           name: helm-wrapper
           readinessProbe:

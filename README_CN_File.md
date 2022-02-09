@@ -158,7 +158,7 @@ Body:
 | info   | 支持 all/readme/values/chart 信息，默认为 all |
 | version | 支持版本指定，同命令行 |
 
-+ helm search repo
++ helm search repo 
     - `GET`
     - `/api/repositories/charts`
 
@@ -215,6 +215,8 @@ Form:
 | :----- | :------------- |
 | file   | 集群的配置文件 |
 
+UUID
+
 #### Helm新增
 
 + helm install
@@ -223,10 +225,11 @@ Form:
 
 Form: 
 
-| Params | Description                                                  |
-| :----- | :----------------------------------------------------------- |
-| chart  | chart 包，必须为 .tgz 文件                                   |
-| args   | {<br/>    "dry_run": false,           // `--dry-run`<br/>    "disable_hooks": false,     // `--no-hooks`<br/>    "wait": false,              // `--wait`<br/>    "devel": false,             // `--false`<br/>    "description": "",          // `--description`<br/>    "atomic": false,            // `--atomic`<br/>    "skip_crds": false,         // `--skip-crds`<br/>    "sub_notes": false,         // `--render-subchart-notes`<br/>    "create_namespace": false,  // `--create-namespace`<br/>    "dependency_update": false, // `--dependency-update`<br/>    "values": "",               // `--values`<br/>    "set": [],                  // `--set`<br/>    "set_string": [],           // `--set-string`<br/>    "ca_file": "",              // `--ca-file`<br/>    "cert_file": "",            // `--cert-file`<br/>    "key_file": "",             // `--key-file`<br/>    "insecure_skip_verify":  false, // `--insecure-skip-verify`<br/>    "keyring": "",              // `--keyring`<br/>    "password": "",             // `--password`<br/>    "repo": "",                 // `--repo`<br/>    "username": "",             // `--username`<br/>    "verify": false,            // `--verify`<br/>    "version": ""               // `--version`<br/>} |
+| Params    | Description                                                  |
+| :-------- | :----------------------------------------------------------- |
+| clusterId | UUID                                                         |
+| chart     | chart 包，必须为 .tgz 文件                                   |
+| args      | {<br/>    "dry_run": false,           // `--dry-run`<br/>    "disable_hooks": false,     // `--no-hooks`<br/>    "wait": false,              // `--wait`<br/>    "devel": false,             // `--false`<br/>    "description": "",          // `--description`<br/>    "atomic": false,            // `--atomic`<br/>    "skip_crds": false,         // `--skip-crds`<br/>    "sub_notes": false,         // `--render-subchart-notes`<br/>    "create_namespace": false,  // `--create-namespace`<br/>    "dependency_update": false, // `--dependency-update`<br/>    "values": "",               // `--values`<br/>    "set": [],                  // `--set`<br/>    "set_string": [],           // `--set-string`<br/>    "ca_file": "",              // `--ca-file`<br/>    "cert_file": "",            // `--cert-file`<br/>    "key_file": "",             // `--key-file`<br/>    "insecure_skip_verify":  false, // `--insecure-skip-verify`<br/>    "keyring": "",              // `--keyring`<br/>    "password": "",             // `--password`<br/>    "repo": "",                 // `--repo`<br/>    "username": "",             // `--username`<br/>    "verify": false,            // `--verify`<br/>    "version": ""               // `--version`<br/>} |
 
 > - args中可以不包含全部字段，如果只设置set字段，可以只包含set字段，set字段的写法如下：
 >

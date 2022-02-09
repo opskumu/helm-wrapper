@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"io"
 	"os"
 )
@@ -14,9 +15,14 @@ func uploadKubeConfig(c *gin.Context) {
 		return
 	}
 
-	path := "/root/.kube"
-	fileName := "config"
+	//path := "/root/.kube"
+	//fileName := "config"
 	//path := "D:/tmp/config"
+
+	id := uuid.New().String()
+	//path := "/tmp/k8s-config/" + id
+	path := "D:/tmp/k8s-config/" + id
+	fileName := "config"
 
 	_, err = os.Stat(path)
 
@@ -43,5 +49,5 @@ func uploadKubeConfig(c *gin.Context) {
 		return
 	}
 
-	respOK(c, nil)
+	respOK(c, id)
 }

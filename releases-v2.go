@@ -4,18 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/release"
 	"io"
 	"os"
+	"sigs.k8s.io/yaml"
+	"strconv"
 	"strings"
 )
 
-func newInstallRelease(c *gin.Context) {
+func setKubeConfig(c *gin.Context) {
+	cluster := c.Param("cluster")
+	settings.KubeConfig = "/tmp/k8s-config/" + cluster + "/config"
+}
+
+func install(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
+
+	setKubeConfig(c)
 
 	args := c.Request.FormValue("args")
 
@@ -161,15 +172,12 @@ func newInstallRelease(c *gin.Context) {
 	respOK(c, info)
 }
 
-func newUpgradeRelease(c *gin.Context) {
+func upgrade(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
-	//aimChart := c.Query("chart")
-	//kubeContext := c.Query("kube_context")
-	//if aimChart == "" {
-	//	respErr(c, fmt.Errorf("chart name can not be empty"))
-	//	return
-	//}
+
+	setKubeConfig(c)
+
 	args := c.Request.FormValue("args")
 	// 文件保存到缓存目录
 	file, header, err := c.Request.FormFile("chart")
@@ -283,4 +291,254 @@ func newUpgradeRelease(c *gin.Context) {
 	}
 
 	respOK(c, info)
+}
+
+func listReleasesV2(c *gin.Context) {
+	namespace := c.Param("namespace")
+
+	setKubeConfig(c)
+
+	kubeContext := c.Query("kube_context")
+	var options releaseListOptions
+	err := c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	client := action.NewList(actionConfig)
+
+	// merge listReleasesV2 options
+	client.All = options.All
+	client.AllNamespaces = options.AllNamespaces
+	if client.AllNamespaces {
+		err = actionConfig.Init(settings.RESTClientGetter(), "", os.Getenv("HELM_DRIVER"), glog.Infof)
+		if err != nil {
+			respErr(c, err)
+			return
+		}
+	}
+	client.ByDate = options.ByDate
+	client.SortReverse = options.SortReverse
+	client.Limit = options.Limit
+	client.Offset = options.Offset
+	client.Filter = options.Filter
+	client.Uninstalled = options.Uninstalled
+	client.Superseded = options.Superseded
+	client.Uninstalling = options.Uninstalling
+	client.Deployed = options.Deployed
+	client.Failed = options.Failed
+	client.Pending = options.Pending
+	client.SetStateMask()
+
+	results, err := client.Run()
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	// Initialize the array so no results returns an empty array instead of null
+	elements := make([]releaseElement, 0, len(results))
+	for _, r := range results {
+		elements = append(elements, constructReleaseElement(r, false))
+	}
+
+	respOK(c, elements)
+}
+
+func showReleaseInfoV2(c *gin.Context) {
+	name := c.Param("release")
+	namespace := c.Param("namespace")
+	setKubeConfig(c)
+	info := c.Query("info")
+	if info == "" {
+		info = "values"
+	}
+	kubeContext := c.Query("kube_context")
+	infos := []string{"hooks", "manifest", "notes", "values"}
+	infoMap := map[string]bool{}
+	for _, i := range infos {
+		infoMap[i] = true
+	}
+	if _, ok := infoMap[info]; !ok {
+		respErr(c, fmt.Errorf("bad info %s, release info only support hooks/manifest/notes/values", info))
+		return
+	}
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	if info == "values" {
+		output := c.Query("output")
+		// get values output format
+		if output == "" {
+			output = "json"
+		}
+		if output != "json" && output != "yaml" {
+			respErr(c, fmt.Errorf("invalid format type %s, output only support json/yaml", output))
+			return
+		}
+
+		client := action.NewGetValues(actionConfig)
+		results, err := client.Run(name)
+		if err != nil {
+			respErr(c, err)
+			return
+		}
+		if output == "yaml" {
+			obj, err := yaml.Marshal(results)
+			if err != nil {
+				respErr(c, err)
+				return
+			}
+			respOK(c, string(obj))
+			return
+		}
+		respOK(c, results)
+		return
+	}
+
+	client := action.NewGet(actionConfig)
+	results, err := client.Run(name)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	// TODO: support all
+	if info == "hooks" {
+		if len(results.Hooks) < 1 {
+			respOK(c, []*release.Hook{})
+			return
+		}
+		respOK(c, results.Hooks)
+		return
+	} else if info == "manifest" {
+		respOK(c, results.Manifest)
+		return
+	} else if info == "notes" {
+		respOK(c, results.Info.Notes)
+		return
+	}
+}
+
+func uninstallReleaseV2(c *gin.Context) {
+	name := c.Param("release")
+	namespace := c.Param("namespace")
+	setKubeConfig(c)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	client := action.NewUninstall(actionConfig)
+	_, err = client.Run(name)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	respOK(c, nil)
+}
+
+func rollbackReleaseV2(c *gin.Context) {
+	name := c.Param("release")
+	namespace := c.Param("namespace")
+	reversionStr := c.Param("reversion")
+	setKubeConfig(c)
+	kubeContext := c.Query("kube_context")
+	reversion, err := strconv.Atoi(reversionStr)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	var options releaseOptions
+	err = c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	client := action.NewRollback(actionConfig)
+	client.Version = reversion
+
+	// merge rollback options
+	client.CleanupOnFail = options.CleanupOnFail
+	client.Wait = options.Wait
+	client.DryRun = options.DryRun
+	client.DisableHooks = options.DisableHooks
+	client.Force = options.Force
+	client.Recreate = options.Recreate
+	client.MaxHistory = options.MaxHistory
+	client.Timeout = options.Timeout
+
+	err = client.Run(name)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	respOK(c, nil)
+}
+
+func getReleaseStatusV2(c *gin.Context) {
+	name := c.Param("release")
+	namespace := c.Param("namespace")
+	setKubeConfig(c)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	client := action.NewStatus(actionConfig)
+	results, err := client.Run(name)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	element := constructReleaseElement(results, true)
+
+	respOK(c, &element)
+}
+
+func listReleaseHistoriesV2(c *gin.Context) {
+	name := c.Param("release")
+	namespace := c.Param("namespace")
+	setKubeConfig(c)
+	kubeContext := c.Query("kube_context")
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+
+	client := action.NewHistory(actionConfig)
+	results, err := client.Run(name)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	if len(results) == 0 {
+		respOK(c, &releaseHistory{})
+		return
+	}
+
+	respOK(c, getReleaseHistory(results))
 }

@@ -39,7 +39,7 @@ func RegisterRouter(router *gin.Engine) {
 	// helm repo
 	repositories := router.Group("/api/repositories")
 	{
-		// helm repo list
+		// helm repo listReleasesV2
 		repositories.GET("", listRepos)
 		// helm search repo
 		repositories.GET("/charts", listRepoCharts)
@@ -54,7 +54,7 @@ func RegisterRouter(router *gin.Engine) {
 		charts.GET("", showChartInfo)
 		// upload chart
 		charts.POST("/upload", uploadChart)
-		// list uploaded charts
+		// listReleasesV2 uploaded charts
 		charts.GET("/upload", listUploadedCharts)
 		// delete chart
 		charts.DELETE("/upload/:chart", deleteChart)
@@ -63,7 +63,7 @@ func RegisterRouter(router *gin.Engine) {
 	// helm release
 	releases := router.Group("/api/namespaces/:namespace/releases")
 	{
-		// helm list releases ->  helm list
+		// helm listReleasesV2 releases ->  helm listReleasesV2
 		releases.GET("", listReleases)
 		// helm get
 		releases.GET("/:release", showReleaseInfo)
@@ -87,11 +87,25 @@ func RegisterRouter(router *gin.Engine) {
 		kubeConfig.POST("/upload", uploadKubeConfig)
 	}
 
-	fileRelease := router.Group("/api/namespaces/:namespace/releases/file")
+	fileRelease := router.Group("/api/namespaces/:namespace/releases/v2/:cluster")
 	{
 		// helm install
-		fileRelease.POST("/install/:release", newInstallRelease)
+		fileRelease.POST("/install/:release", install)
 
-		fileRelease.POST("/upgrade/:release", newUpgradeRelease)
+		fileRelease.POST("/upgrade/:release", upgrade)
+
+		// helm listReleasesV2 releases ->  helm listReleasesV2
+		fileRelease.GET("/listReleasesV2", listReleasesV2)
+		// helm get
+		fileRelease.GET("/:release", showReleaseInfoV2)
+
+		// helm uninstall
+		fileRelease.DELETE("/:release", uninstallReleaseV2)
+		// helm rollback
+		fileRelease.PUT("/:release/versions/:reversion", rollbackReleaseV2)
+		// helm status <RELEASE_NAME>
+		fileRelease.GET("/:release/status", getReleaseStatusV2)
+		// helm release history
+		fileRelease.GET("/:release/histories", listReleaseHistoriesV2)
 	}
 }
