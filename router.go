@@ -63,7 +63,7 @@ func RegisterRouter(router *gin.Engine) {
 	// helm release
 	releases := router.Group("/api/namespaces/:namespace/releases")
 	{
-		// helm listReleasesV2 releases ->  helm listReleasesV2
+		// helm list releases ->  helm list
 		releases.GET("", listReleases)
 		// helm get
 		releases.GET("/:release", showReleaseInfo)
@@ -94,8 +94,8 @@ func RegisterRouter(router *gin.Engine) {
 
 		fileRelease.POST("/upgrade/:release", upgrade)
 
-		// helm listReleasesV2 releases ->  helm listReleasesV2
-		fileRelease.GET("/listReleasesV2", listReleasesV2)
+		// helm list releases ->  helm list
+		fileRelease.GET("/list", listReleasesV2)
 		// helm get
 		fileRelease.GET("/:release", showReleaseInfoV2)
 

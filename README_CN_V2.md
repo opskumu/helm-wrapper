@@ -197,13 +197,15 @@ Body:
 
 
 
-------
+## Support API -V2
 
 ------
 
-### **新增API【修改】**
+------
 
-#### 集群配置文件新增
+为了支撑多集群场景，新增以下接口：
+
+#### 集群配置文件【新增】
 
 - upload
   - POST
@@ -215,22 +217,31 @@ Form:
 | :----- | :------------- |
 | file   | 集群的配置文件 |
 
-UUID
+返回值
 
-#### Helm新增
+```json
+{
+    "code": 200,
+    "data": "7fc76a25-14c5-4da8-b19a-985a36dfdc95"
+}
+```
+
+> 说明：其中返回的data为集群的ID，后续使用Helm接口中URL中的cluster就是返回的data的值
+
+#### Helm-V2
 
 + helm install
   - `POST`
-  - `/api/namespaces/:namespace/releases/file/install/:release`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/install/:release`
 
 Form: 
 
-| Params    | Description                                                  |
-| :-------- | :----------------------------------------------------------- |
-| clusterId | UUID                                                         |
-| chart     | chart 包，必须为 .tgz 文件                                   |
-| args      | {<br/>    "dry_run": false,           // `--dry-run`<br/>    "disable_hooks": false,     // `--no-hooks`<br/>    "wait": false,              // `--wait`<br/>    "devel": false,             // `--false`<br/>    "description": "",          // `--description`<br/>    "atomic": false,            // `--atomic`<br/>    "skip_crds": false,         // `--skip-crds`<br/>    "sub_notes": false,         // `--render-subchart-notes`<br/>    "create_namespace": false,  // `--create-namespace`<br/>    "dependency_update": false, // `--dependency-update`<br/>    "values": "",               // `--values`<br/>    "set": [],                  // `--set`<br/>    "set_string": [],           // `--set-string`<br/>    "ca_file": "",              // `--ca-file`<br/>    "cert_file": "",            // `--cert-file`<br/>    "key_file": "",             // `--key-file`<br/>    "insecure_skip_verify":  false, // `--insecure-skip-verify`<br/>    "keyring": "",              // `--keyring`<br/>    "password": "",             // `--password`<br/>    "repo": "",                 // `--repo`<br/>    "username": "",             // `--username`<br/>    "verify": false,            // `--verify`<br/>    "version": ""               // `--version`<br/>} |
+| Params | Description                                                  |
+| :----- | :----------------------------------------------------------- |
+| chart  | chart 包，必须为 .tgz 文件                                   |
+| args   | {<br/>    "dry_run": false,           // `--dry-run`<br/>    "disable_hooks": false,     // `--no-hooks`<br/>    "wait": false,              // `--wait`<br/>    "devel": false,             // `--false`<br/>    "description": "",          // `--description`<br/>    "atomic": false,            // `--atomic`<br/>    "skip_crds": false,         // `--skip-crds`<br/>    "sub_notes": false,         // `--render-subchart-notes`<br/>    "create_namespace": false,  // `--create-namespace`<br/>    "dependency_update": false, // `--dependency-update`<br/>    "values": "",               // `--values`<br/>    "set": [],                  // `--set`<br/>    "set_string": [],           // `--set-string`<br/>    "ca_file": "",              // `--ca-file`<br/>    "cert_file": "",            // `--cert-file`<br/>    "key_file": "",             // `--key-file`<br/>    "insecure_skip_verify":  false, // `--insecure-skip-verify`<br/>    "keyring": "",              // `--keyring`<br/>    "password": "",             // `--password`<br/>    "repo": "",                 // `--repo`<br/>    "username": "",             // `--username`<br/>    "verify": false,            // `--verify`<br/>    "version": ""               // `--version`<br/>} |
 
+> - cluster的值是`集群配置文件`接口返回的data值
 > - args中可以不包含全部字段，如果只设置set字段，可以只包含set字段，set字段的写法如下：
 >
 > ```json
@@ -245,7 +256,7 @@ Form:
 
 + helm upgrade
   - `PUT`
-  - `/api/namespaces/:namespace/releases/file/upgrade/:release`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/upgrade/:release`
 
 Form: 
 
@@ -257,6 +268,7 @@ Form:
 
 
 
+> - cluster的值是`集群配置文件`接口返回的data值
 > - args中可以不包含全部字段，如果只设置set字段，可以只包含set字段，set字段的写法如下：
 >
 > ```json
@@ -269,6 +281,46 @@ Form:
 > - release要保证已经安装过，不然会报错
 
 
+
++ helm list
+  - `GET`
+  - `/api/namespaces/:namespace/releases/v2/:cluster`
+
+Body:
+
+``` json
+{
+    "all": false,               // `--all`
+    "all_namespaces": false,    // `--all-namespaces`
+    "by_date": false,           // `--date`
+    "sort_reverse": false,      // `--reverse`
+    "limit":  ,                 // `--max`
+    "offset": ,                 // `--offset`
+    "filter": "",               // `--filter`
+    "uninstalled": false,       // `--uninstalled`
+    "uninstalling": false,      // `--uninstalling`
+    "superseded": false,        // `--superseded`
+    "failed": false,            // `--failed`
+    "deployed": false,          // `--deployed`
+    "pending": false            // `--pending`
+}
+```
+
++ helm get
+  - `GET`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/:release`
++ helm uninstall
+  - `DELETE`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/:release`
++ helm rollback
+  - `PUT`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/:release/versions/:reversion`
++ helm release status
+  - `GET`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/:release/status`
++ helm release history
+  - `GET`
+  - `/api/namespaces/:namespace/releases/v2/:cluster/:release/histories`
 
 ------
 
