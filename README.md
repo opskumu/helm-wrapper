@@ -39,7 +39,7 @@ POST Body:
     "ca_file": "",              // `--ca-file`
     "cert_file": "",            // `--cert-file`
     "key_file": "",             // `--key-file`
-    "insecure_skip_verify": "", // `--insecure-skip-verify`
+    "insecure_skip_verify": false, // `--insecure-skip-verify`
     "keyring": "",              // `--keyring`
     "password": "",             // `--password`
     "repo": "",                 // `--repo`
@@ -82,7 +82,7 @@ PUT Body:
     "ca_file": "",              // `--ca-file`
     "cert_file": "",            // `--cert-file`
     "key_file": "",             // `--key-file`
-    "insecure_skip_verify": "", // `--insecure-skip-verify`
+    "insecure_skip_verify": false, // `--insecure-skip-verify`
     "keyring": "",              // `--keyring`
     "password": "",             // `--password`
     "repo": "",                 // `--repo`
