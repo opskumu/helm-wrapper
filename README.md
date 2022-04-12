@@ -7,11 +7,12 @@ helm-wrapper is a helm3 HTTP wrapper with [helm Go SDK](https://helm.sh/docs/top
 ## Support API
 
 
-* If there are some APIs need to support multiple clusters,you can use the parameters below
+* If there are some APIs (`release` related) need to support multiple clusters,you can use the parameters below
 
 | Params | Description |
-| :- | :- |
+|:---| :--- |
 | kube_context | Support distinguish multiple clusters by the`kube_context`  |
+| kube_config  | Support distinguish multiple clusters by the`kube_config`  |
 
 
 
@@ -141,7 +142,7 @@ Body:
     - `/api/namespaces/:namespace/releases/:release`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | info | support hooks/manifest/notes/values, default values |
 | output | get values output format (only info==values), support json/yaml, default json |
 
@@ -155,7 +156,7 @@ Body:
     - `/api/charts`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | chart  | chart name, required|
 | info   | support all/readme/values/chart, default all |
 | version | --version |
@@ -165,7 +166,7 @@ Body:
     - `/api/repositories/charts`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | keyword | search keyword，required |
 | version | chart version |
 | versions | if "true", all versions |
@@ -187,7 +188,7 @@ Body:
     - `/api/charts/upload`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | chart | upload chart file, with suffix .tgz |
 
 + list local charts

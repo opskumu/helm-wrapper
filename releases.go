@@ -218,6 +218,7 @@ func showReleaseInfo(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	info := c.Query("info")
+	kubeConfig := c.Query("kube_config")
 	if info == "" {
 		info = "values"
 	}
@@ -231,7 +232,7 @@ func showReleaseInfo(c *gin.Context) {
 		respErr(c, fmt.Errorf("bad info %s, release info only support hooks/manifest/notes/values", info))
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -295,6 +296,8 @@ func installRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	aimChart := c.Query("chart")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
@@ -319,7 +322,7 @@ func installRelease(c *gin.Context) {
 		return
 	}
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -409,8 +412,9 @@ func uninstallRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -430,6 +434,8 @@ func rollbackRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	reversionStr := c.Param("reversion")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	reversion, err := strconv.Atoi(reversionStr)
 	if err != nil {
 		respErr(c, err)
@@ -443,7 +449,7 @@ func rollbackRelease(c *gin.Context) {
 		return
 	}
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -474,6 +480,8 @@ func upgradeRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	aimChart := c.Query("chart")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
@@ -496,7 +504,7 @@ func upgradeRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -561,13 +569,15 @@ func upgradeRelease(c *gin.Context) {
 func listReleases(c *gin.Context) {
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	var options releaseListOptions
 	err := c.ShouldBindJSON(&options)
 	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -617,8 +627,9 @@ func getReleaseStatus(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -639,8 +650,9 @@ func listReleaseHistories(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
