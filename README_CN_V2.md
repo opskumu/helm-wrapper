@@ -255,7 +255,7 @@ Form:
 
 
 + helm upgrade
-  - `PUT`
+  - `POST`
   - `/api/namespaces/:namespace/releases/v2/:cluster/upgrade/:release`
 
 Form: 

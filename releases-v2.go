@@ -387,6 +387,7 @@ func showReleaseInfoV2(c *gin.Context) {
 		}
 
 		client := action.NewGetValues(actionConfig)
+		client.AllValues = true
 		results, err := client.Run(name)
 		if err != nil {
 			respErr(c, err)
