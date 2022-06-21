@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -137,7 +138,11 @@ func formatAppVersion(c *chart.Chart) string {
 
 func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	vals := map[string]interface{}{}
-	err := yaml.Unmarshal([]byte(options.Values), &vals)
+	values, err := readValues(options.Values)
+	if err != nil {
+		return vals, err
+	}
+	err = yaml.Unmarshal([]byte(values), &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
 	}
@@ -670,4 +675,20 @@ func listReleaseHistories(c *gin.Context) {
 	}
 
 	respOK(c, getReleaseHistory(results))
+}
+
+func readValues(filePath string) ([]byte, error) {
+	u, _ := url.Parse(filePath)
+	p := getter.All(settings)
+	g, err := p.ByScheme(u.Scheme)
+	if err != nil {
+		return []byte(filePath), nil
+	}
+
+	data, err := g.Get(filePath, getter.WithURL(filePath))
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Bytes(), err
 }
