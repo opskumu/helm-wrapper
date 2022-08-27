@@ -78,6 +78,7 @@ type releaseOptions struct {
 	// upgrade or rollback
 	Force         bool `json:"force"`
 	Recreate      bool `json:"recreate"`
+	ReuseValues   bool `json:"reuse_values"`
 	CleanupOnFail bool `json:"cleanup_on_fail"`
 }
 
@@ -530,6 +531,7 @@ func upgradeRelease(c *gin.Context) {
 	client.Force = options.Force
 	client.Install = options.Install
 	client.Recreate = options.Recreate
+	client.ReuseValues = options.ReuseValues
 	client.CleanupOnFail = options.CleanupOnFail
 
 	// merge chart path options

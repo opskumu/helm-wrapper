@@ -76,6 +76,7 @@ PUT Body:
     "force": false,             // `--force`
     "install": false,           // `--install`
     "recreate": false,          // `--recreate`
+    "reuse_values": false,      // `--reuse-values`
     "cleanup_on_fail": false,   // `--cleanup-on-fail`
     "values": "",               // `--values`
     "set": [],                  // `--set`
