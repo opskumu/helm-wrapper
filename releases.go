@@ -143,7 +143,7 @@ func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	if err != nil {
 		return vals, err
 	}
-	err = yaml.Unmarshal([]byte(values), &vals)
+	err = yaml.Unmarshal(values, &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
 	}
@@ -681,8 +681,13 @@ func listReleaseHistories(c *gin.Context) {
 
 func readValues(filePath string) ([]byte, error) {
 	u, _ := url.Parse(filePath)
+	if u == nil {
+		return []byte(filePath), nil
+	}
+
 	p := getter.All(settings)
 	g, err := p.ByScheme(u.Scheme)
+	// if scheme not support, return self
 	if err != nil {
 		return []byte(filePath), nil
 	}
@@ -692,5 +697,5 @@ func readValues(filePath string) ([]byte, error) {
 		return nil, err
 	}
 
-	return data.Bytes(), err
+	return data.Bytes(), nil
 }
