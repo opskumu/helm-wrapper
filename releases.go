@@ -18,6 +18,7 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/strvals"
 	helmtime "helm.sh/helm/v3/pkg/time"
 	"sigs.k8s.io/yaml"
@@ -51,18 +52,20 @@ type releaseElement struct {
 
 type releaseOptions struct {
 	// common
-	DryRun          bool          `json:"dry_run"`
-	DisableHooks    bool          `json:"disable_hooks"`
-	Wait            bool          `json:"wait"`
-	Devel           bool          `json:"devel"`
-	Description     string        `json:"description"`
-	Atomic          bool          `json:"atomic"`
-	SkipCRDs        bool          `json:"skip_crds"`
-	SubNotes        bool          `json:"sub_notes"`
-	Timeout         time.Duration `json:"timeout"`
-	Values          string        `json:"values"`
-	SetValues       []string      `json:"set"`
-	SetStringValues []string      `json:"set_string"`
+	DryRun                   bool          `json:"dry_run"`
+	DisableHooks             bool          `json:"disable_hooks"`
+	Wait                     bool          `json:"wait"`
+	Devel                    bool          `json:"devel"`
+	Description              string        `json:"description"`
+	Atomic                   bool          `json:"atomic"`
+	SkipCRDs                 bool          `json:"skip_crds"`
+	SubNotes                 bool          `json:"sub_notes"`
+	Timeout                  time.Duration `json:"timeout"`
+	WaitForJobs              bool          `json:"wait_for_jobs"`
+	DisableOpenAPIValidation bool          `json:"disable_open_api_validation"`
+	Values                   string        `json:"values"`
+	SetValues                []string      `json:"set"`
+	SetStringValues          []string      `json:"set_string"`
 	ChartPathOptions
 
 	// only install
@@ -322,15 +325,23 @@ func installRelease(c *gin.Context) {
 		return
 	}
 
+	if err = runInstall(name, namespace, kubeContext, aimChart, kubeConfig, options); err != nil {
+		respErr(c, err)
+		return
+	}
+
+	respOK(c, err)
+	return
+}
+
+func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, options releaseOptions) (err error) {
 	vals, err := mergeValues(options)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
 	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 	client := action.NewInstall(actionConfig)
@@ -341,11 +352,14 @@ func installRelease(c *gin.Context) {
 	client.DryRun = options.DryRun
 	client.DisableHooks = options.DisableHooks
 	client.Wait = options.Wait
+	client.Timeout = options.Timeout
+	client.WaitForJobs = options.WaitForJobs
 	client.Devel = options.Devel
 	client.Description = options.Description
 	client.Atomic = options.Atomic
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
+	client.DisableOpenAPIValidation = options.DisableOpenAPIValidation
 	client.Timeout = options.Timeout
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
@@ -364,19 +378,16 @@ func installRelease(c *gin.Context) {
 
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
 	chartRequested, err := loader.Load(cp)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
 	validInstallableChart, err := isChartInstallable(chartRequested)
 	if !validInstallableChart {
-		respErr(c, err)
 		return
 	}
 
@@ -384,7 +395,7 @@ func installRelease(c *gin.Context) {
 		// If CheckDependencies returns an error, we have unfulfilled dependencies.
 		// As of Helm 2.4.0, this is treated as a stopping condition:
 		// https://github.com/helm/helm/issues/2209
-		if err := action.CheckDependencies(chartRequested, req); err != nil {
+		if err = action.CheckDependencies(chartRequested, req); err != nil {
 			if client.DependencyUpdate {
 				man := &downloader.Manager{
 					ChartPath:        cp,
@@ -394,12 +405,10 @@ func installRelease(c *gin.Context) {
 					RepositoryConfig: settings.RepositoryConfig,
 					RepositoryCache:  settings.RepositoryCache,
 				}
-				if err := man.Update(); err != nil {
-					respErr(c, err)
+				if err = man.Update(); err != nil {
 					return
 				}
 			} else {
-				respErr(c, err)
 				return
 			}
 		}
@@ -407,11 +416,10 @@ func installRelease(c *gin.Context) {
 
 	_, err = client.Run(chartRequested, vals)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
-	respOK(c, nil)
+	return nil
 }
 
 func uninstallRelease(c *gin.Context) {
@@ -559,6 +567,24 @@ func upgradeRelease(c *gin.Context) {
 	}
 	if req := chartRequested.Metadata.Dependencies; req != nil {
 		if err := action.CheckDependencies(chartRequested, req); err != nil {
+			respErr(c, err)
+			return
+		}
+	}
+
+	if client.Install {
+		hisClient := action.NewHistory(actionConfig)
+		hisClient.Max = 1
+		if _, err := hisClient.Run(name); err == driver.ErrReleaseNotFound {
+			err = runInstall(name, namespace, kubeContext, aimChart, kubeConfig, options)
+			if err != nil {
+				respErr(c, err)
+				return
+			}
+
+			respOK(c, err)
+			return
+		} else if err != nil {
 			respErr(c, err)
 			return
 		}
