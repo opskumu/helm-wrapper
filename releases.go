@@ -536,6 +536,7 @@ func upgradeRelease(c *gin.Context) {
 	client.Timeout = options.Timeout
 	client.Force = options.Force
 	client.Install = options.Install
+	client.MaxHistory = options.MaxHistory
 	client.Recreate = options.Recreate
 	client.ReuseValues = options.ReuseValues
 	client.CleanupOnFail = options.CleanupOnFail
