@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,7 +95,7 @@ func initRepos(c *repo.Entry) error {
 		return err
 	}
 
-	b, err := ioutil.ReadFile(settings.RepositoryConfig)
+	b, err := os.ReadFile(settings.RepositoryConfig)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
