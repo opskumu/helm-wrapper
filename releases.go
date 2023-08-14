@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -610,6 +608,9 @@ func listReleases(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
+	if options.AllNamespaces {
+		namespace = ""
+	}
 	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
@@ -621,13 +622,6 @@ func listReleases(c *gin.Context) {
 	// merge list options
 	client.All = options.All
 	client.AllNamespaces = options.AllNamespaces
-	if client.AllNamespaces {
-		err = actionConfig.Init(settings.RESTClientGetter(), "", os.Getenv("HELM_DRIVER"), glog.Infof)
-		if err != nil {
-			respErr(c, err)
-			return
-		}
-	}
 	client.ByDate = options.ByDate
 	client.SortReverse = options.SortReverse
 	client.Limit = options.Limit
