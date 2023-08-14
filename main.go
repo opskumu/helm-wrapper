@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -50,7 +49,7 @@ func main() {
 	pflag.Parse()
 	defer glog.Flush()
 
-	configBody, err := ioutil.ReadFile(config)
+	configBody, err := os.ReadFile(config)
 	if err != nil {
 		glog.Fatalln(err)
 	}
