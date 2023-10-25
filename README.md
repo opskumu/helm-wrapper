@@ -268,7 +268,7 @@ $ ./helm-wrapper --config </path/to/config.yaml> --kubeconfig </path/to/kubeconf
 replace deployment/deployment.yaml with helm-wrapper image, then:
 
 ```
-kubeclt create -f ./deployment 
+kubectl create -f ./deployment 
 ```
 
 > __Noets:__ with deployment/rbac.yaml, you not need `--kubeconfig`
