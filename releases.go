@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -64,6 +65,7 @@ type releaseOptions struct {
 	Values                   string        `json:"values"`
 	SetValues                []string      `json:"set"`
 	SetStringValues          []string      `json:"set_string"`
+	SetJsonValues            []string      `json:"set_json"`
 	ChartPathOptions
 
 	// only install
@@ -147,6 +149,12 @@ func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	err = yaml.Unmarshal(values, &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
+	}
+
+	for _, value := range options.SetJsonValues {
+		seg := strings.Split(value, "=")
+		jsonStr := "{\"" + seg[0] + "\":" + seg[1] + "}"
+		json.Unmarshal([]byte(jsonStr), &vals)
 	}
 
 	for _, value := range options.SetValues {
