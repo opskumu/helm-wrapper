@@ -22,6 +22,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var defaultTimeout = "5m0s"
+
 type releaseInfo struct {
 	Revision    int           `json:"revision"`
 	Updated     helmtime.Time `json:"updated"`
@@ -50,20 +52,20 @@ type releaseElement struct {
 
 type releaseOptions struct {
 	// common
-	DryRun                   bool          `json:"dry_run"`
-	DisableHooks             bool          `json:"disable_hooks"`
-	Wait                     bool          `json:"wait"`
-	Devel                    bool          `json:"devel"`
-	Description              string        `json:"description"`
-	Atomic                   bool          `json:"atomic"`
-	SkipCRDs                 bool          `json:"skip_crds"`
-	SubNotes                 bool          `json:"sub_notes"`
-	Timeout                  time.Duration `json:"timeout"`
-	WaitForJobs              bool          `json:"wait_for_jobs"`
-	DisableOpenAPIValidation bool          `json:"disable_open_api_validation"`
-	Values                   string        `json:"values"`
-	SetValues                []string      `json:"set"`
-	SetStringValues          []string      `json:"set_string"`
+	DryRun                   bool     `json:"dry_run"`
+	DisableHooks             bool     `json:"disable_hooks"`
+	Wait                     bool     `json:"wait"`
+	Devel                    bool     `json:"devel"`
+	Description              string   `json:"description"`
+	Atomic                   bool     `json:"atomic"`
+	SkipCRDs                 bool     `json:"skip_crds"`
+	SubNotes                 bool     `json:"sub_notes"`
+	Timeout                  string   `json:"timeout"`
+	WaitForJobs              bool     `json:"wait_for_jobs"`
+	DisableOpenAPIValidation bool     `json:"disable_open_api_validation"`
+	Values                   string   `json:"values"`
+	SetValues                []string `json:"set"`
+	SetStringValues          []string `json:"set_string"`
 	ChartPathOptions
 
 	// only install
@@ -350,7 +352,13 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	client.DryRun = options.DryRun
 	client.DisableHooks = options.DisableHooks
 	client.Wait = options.Wait
-	client.Timeout = options.Timeout
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
 	client.WaitForJobs = options.WaitForJobs
 	client.Devel = options.Devel
 	client.Description = options.Description
@@ -358,7 +366,6 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
 	client.DisableOpenAPIValidation = options.DisableOpenAPIValidation
-	client.Timeout = options.Timeout
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
 
@@ -477,7 +484,13 @@ func rollbackRelease(c *gin.Context) {
 	client.Force = options.Force
 	client.Recreate = options.Recreate
 	client.MaxHistory = options.MaxHistory
-	client.Timeout = options.Timeout
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
 
 	err = client.Run(name)
 	if err != nil {
@@ -533,8 +546,14 @@ func upgradeRelease(c *gin.Context) {
 	client.Atomic = options.Atomic
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
-	client.Timeout = options.Timeout
 	client.Force = options.Force
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
 	client.Install = options.Install
 	client.MaxHistory = options.MaxHistory
 	client.Recreate = options.Recreate
