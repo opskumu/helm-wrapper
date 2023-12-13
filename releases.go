@@ -22,6 +22,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var defaultTimeout = 300 * time.Second
+
 type releaseInfo struct {
 	Revision    int           `json:"revision"`
 	Updated     helmtime.Time `json:"updated"`
@@ -350,6 +352,9 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	client.DryRun = options.DryRun
 	client.DisableHooks = options.DisableHooks
 	client.Wait = options.Wait
+	if options.Timeout == 0 {
+		options.Timeout = defaultTimeout
+	}
 	client.Timeout = options.Timeout
 	client.WaitForJobs = options.WaitForJobs
 	client.Devel = options.Devel
@@ -358,7 +363,6 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
 	client.DisableOpenAPIValidation = options.DisableOpenAPIValidation
-	client.Timeout = options.Timeout
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
 
@@ -477,6 +481,9 @@ func rollbackRelease(c *gin.Context) {
 	client.Force = options.Force
 	client.Recreate = options.Recreate
 	client.MaxHistory = options.MaxHistory
+	if options.Timeout == 0 {
+		options.Timeout = defaultTimeout
+	}
 	client.Timeout = options.Timeout
 
 	err = client.Run(name)
@@ -533,6 +540,9 @@ func upgradeRelease(c *gin.Context) {
 	client.Atomic = options.Atomic
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
+	if options.Timeout == 0 {
+		options.Timeout = defaultTimeout
+	}
 	client.Timeout = options.Timeout
 	client.Force = options.Force
 	client.Install = options.Install
