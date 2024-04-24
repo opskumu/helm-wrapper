@@ -4,11 +4,12 @@ Helm3 摒弃了 Helm2 的 Tiller 架构，使用纯命令行的方式执行相�
 
 ## Support API
 
-* 如果某些API需要支持多个集群，则可以使用以下参数
+* 如果某些API(release相关)需要支持多个集群，则可以使用以下参数
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | kube_context | 支持指定kube_context来区分不同集群 |
+| kube_config | 支持指定kube_config来区分不同集群 |
 
 helm 原生命令行和相关 API 对应关系：
 
@@ -23,6 +24,7 @@ POST Body:
     "dry_run": false,           // `--dry-run`
     "disable_hooks": false,     // `--no-hooks`
     "wait": false,              // `--wait`
+    "timeout": "5m0s",          // `--timeout`
     "devel": false,             // `--false`
     "description": "",          // `--description`
     "atomic": false,            // `--atomic`
@@ -64,6 +66,7 @@ PUT Body:
     "dry_run": false,           // `--dry-run`
     "disable_hooks": false,     // `--no-hooks`
     "wait": false,              // `--wait`
+    "timeout": "5m0s",          // `--timeout`
     "devel": false,             // `--false`
     "description": "",          // `--description`
     "atomic": false,            // `--atomic`
@@ -72,6 +75,7 @@ PUT Body:
     "force": false,             // `--force`
     "install": false,           // `--install`
     "recreate": false,          // `--recreate`
+    "reuse_values": false,      // `--reuse-values`
     "cleanup_on_fail": false,   // `--cleanup-on-fail`
     "values": "",               // `--values`
     "set": [],                  // `--set`
@@ -103,6 +107,7 @@ PUT Body 可选:
     "dry_run": false,           // `--dry-run`
     "disable_hooks": false,     // `--no-hooks`
     "wait": false,              // `--wait`
+    "timeout": "5m0s",          // `--timeout`
     "force": false,             // `--force`
     "recreate": false,          // `--recreate`
     "cleanup_on_fail": false,   // `--cleanup-on-fail`
@@ -139,7 +144,7 @@ Body:
     - `/api/namespaces/:namespace/releases/:release`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | info | 支持 hooks/manifest/notes/values 信息，默认为 values |
 | output | values 输出格式（仅当 info=values 时有效），支持 json/yaml，默认为 json |
 
@@ -153,7 +158,7 @@ Body:
     - `/api/charts`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | chart  | 指定 chart 名，必填 |
 | info   | 支持 all/readme/values/chart 信息，默认为 all |
 | version | 支持版本指定，同命令行 |
@@ -163,7 +168,7 @@ Body:
     - `/api/repositories/charts`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | keyword | 搜索关键字，必填 |
 | version | 指定 chart version |
 | versions | if "true", all versions |
@@ -186,7 +191,7 @@ Body:
     - `/api/charts/upload`
 
 | Params | Description |
-| :- | :- |
+| :--- | :--- |
 | chart | chart 包，必须为 .tgz 文件 |
 
 + list local charts

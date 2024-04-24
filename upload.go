@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -43,7 +42,7 @@ func uploadChart(c *gin.Context) {
 
 func listUploadedCharts(c *gin.Context) {
 	charts := []string{}
-	files, err := ioutil.ReadDir(helmConfig.UploadPath)
+	files, err := os.ReadDir(helmConfig.UploadPath)
 	if err != nil {
 		respErr(c, err)
 		return

@@ -3,13 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -17,10 +16,13 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/strvals"
 	helmtime "helm.sh/helm/v3/pkg/time"
 	"sigs.k8s.io/yaml"
 )
+
+var defaultTimeout = "5m0s"
 
 type releaseInfo struct {
 	Revision    int           `json:"revision"`
@@ -50,18 +52,20 @@ type releaseElement struct {
 
 type releaseOptions struct {
 	// common
-	DryRun          bool          `json:"dry_run"`
-	DisableHooks    bool          `json:"disable_hooks"`
-	Wait            bool          `json:"wait"`
-	Devel           bool          `json:"devel"`
-	Description     string        `json:"description"`
-	Atomic          bool          `json:"atomic"`
-	SkipCRDs        bool          `json:"skip_crds"`
-	SubNotes        bool          `json:"sub_notes"`
-	Timeout         time.Duration `json:"timeout"`
-	Values          string        `json:"values"`
-	SetValues       []string      `json:"set"`
-	SetStringValues []string      `json:"set_string"`
+	DryRun                   bool     `json:"dry_run"`
+	DisableHooks             bool     `json:"disable_hooks"`
+	Wait                     bool     `json:"wait"`
+	Devel                    bool     `json:"devel"`
+	Description              string   `json:"description"`
+	Atomic                   bool     `json:"atomic"`
+	SkipCRDs                 bool     `json:"skip_crds"`
+	SubNotes                 bool     `json:"sub_notes"`
+	Timeout                  string   `json:"timeout"`
+	WaitForJobs              bool     `json:"wait_for_jobs"`
+	DisableOpenAPIValidation bool     `json:"disable_open_api_validation"`
+	Values                   string   `json:"values"`
+	SetValues                []string `json:"set"`
+	SetStringValues          []string `json:"set_string"`
 	ChartPathOptions
 
 	// only install
@@ -77,6 +81,7 @@ type releaseOptions struct {
 	// upgrade or rollback
 	Force         bool `json:"force"`
 	Recreate      bool `json:"recreate"`
+	ReuseValues   bool `json:"reuse_values"`
 	CleanupOnFail bool `json:"cleanup_on_fail"`
 }
 
@@ -137,7 +142,11 @@ func formatAppVersion(c *chart.Chart) string {
 
 func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	vals := map[string]interface{}{}
-	err := yaml.Unmarshal([]byte(options.Values), &vals)
+	values, err := readValues(options.Values)
+	if err != nil {
+		return vals, err
+	}
+	err = yaml.Unmarshal(values, &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
 	}
@@ -218,6 +227,7 @@ func showReleaseInfo(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	info := c.Query("info")
+	kubeConfig := c.Query("kube_config")
 	if info == "" {
 		info = "values"
 	}
@@ -231,7 +241,7 @@ func showReleaseInfo(c *gin.Context) {
 		respErr(c, fmt.Errorf("bad info %s, release info only support hooks/manifest/notes/values", info))
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -295,6 +305,8 @@ func installRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	aimChart := c.Query("chart")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
@@ -313,15 +325,23 @@ func installRelease(c *gin.Context) {
 		return
 	}
 
-	vals, err := mergeValues(options)
-	if err != nil {
+	if err = runInstall(name, namespace, kubeContext, aimChart, kubeConfig, options); err != nil {
 		respErr(c, err)
 		return
 	}
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	respOK(c, err)
+	return
+}
+
+func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, options releaseOptions) (err error) {
+	vals, err := mergeValues(options)
 	if err != nil {
-		respErr(c, err)
+		return
+	}
+
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
+	if err != nil {
 		return
 	}
 	client := action.NewInstall(actionConfig)
@@ -332,12 +352,20 @@ func installRelease(c *gin.Context) {
 	client.DryRun = options.DryRun
 	client.DisableHooks = options.DisableHooks
 	client.Wait = options.Wait
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
+	client.WaitForJobs = options.WaitForJobs
 	client.Devel = options.Devel
 	client.Description = options.Description
 	client.Atomic = options.Atomic
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
-	client.Timeout = options.Timeout
+	client.DisableOpenAPIValidation = options.DisableOpenAPIValidation
 	client.CreateNamespace = options.CreateNamespace
 	client.DependencyUpdate = options.DependencyUpdate
 
@@ -355,19 +383,16 @@ func installRelease(c *gin.Context) {
 
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
 	chartRequested, err := loader.Load(cp)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
 	validInstallableChart, err := isChartInstallable(chartRequested)
 	if !validInstallableChart {
-		respErr(c, err)
 		return
 	}
 
@@ -375,7 +400,7 @@ func installRelease(c *gin.Context) {
 		// If CheckDependencies returns an error, we have unfulfilled dependencies.
 		// As of Helm 2.4.0, this is treated as a stopping condition:
 		// https://github.com/helm/helm/issues/2209
-		if err := action.CheckDependencies(chartRequested, req); err != nil {
+		if err = action.CheckDependencies(chartRequested, req); err != nil {
 			if client.DependencyUpdate {
 				man := &downloader.Manager{
 					ChartPath:        cp,
@@ -385,12 +410,10 @@ func installRelease(c *gin.Context) {
 					RepositoryConfig: settings.RepositoryConfig,
 					RepositoryCache:  settings.RepositoryCache,
 				}
-				if err := man.Update(); err != nil {
-					respErr(c, err)
+				if err = man.Update(); err != nil {
 					return
 				}
 			} else {
-				respErr(c, err)
 				return
 			}
 		}
@@ -398,19 +421,19 @@ func installRelease(c *gin.Context) {
 
 	_, err = client.Run(chartRequested, vals)
 	if err != nil {
-		respErr(c, err)
 		return
 	}
 
-	respOK(c, nil)
+	return nil
 }
 
 func uninstallRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -430,6 +453,8 @@ func rollbackRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	reversionStr := c.Param("reversion")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	reversion, err := strconv.Atoi(reversionStr)
 	if err != nil {
 		respErr(c, err)
@@ -443,7 +468,7 @@ func rollbackRelease(c *gin.Context) {
 		return
 	}
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -459,7 +484,13 @@ func rollbackRelease(c *gin.Context) {
 	client.Force = options.Force
 	client.Recreate = options.Recreate
 	client.MaxHistory = options.MaxHistory
-	client.Timeout = options.Timeout
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
 
 	err = client.Run(name)
 	if err != nil {
@@ -474,6 +505,8 @@ func upgradeRelease(c *gin.Context) {
 	namespace := c.Param("namespace")
 	aimChart := c.Query("chart")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	if aimChart == "" {
 		respErr(c, fmt.Errorf("chart name can not be empty"))
 		return
@@ -496,7 +529,7 @@ func upgradeRelease(c *gin.Context) {
 		respErr(c, err)
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -513,10 +546,18 @@ func upgradeRelease(c *gin.Context) {
 	client.Atomic = options.Atomic
 	client.SkipCRDs = options.SkipCRDs
 	client.SubNotes = options.SubNotes
-	client.Timeout = options.Timeout
 	client.Force = options.Force
+	if options.Timeout == "" {
+		options.Timeout = defaultTimeout
+	}
+	client.Timeout, err = time.ParseDuration(options.Timeout)
+	if err != nil {
+		return
+	}
 	client.Install = options.Install
+	client.MaxHistory = options.MaxHistory
 	client.Recreate = options.Recreate
+	client.ReuseValues = options.ReuseValues
 	client.CleanupOnFail = options.CleanupOnFail
 
 	// merge chart path options
@@ -549,6 +590,24 @@ func upgradeRelease(c *gin.Context) {
 		}
 	}
 
+	if client.Install {
+		hisClient := action.NewHistory(actionConfig)
+		hisClient.Max = 1
+		if _, err := hisClient.Run(name); err == driver.ErrReleaseNotFound {
+			err = runInstall(name, namespace, kubeContext, aimChart, kubeConfig, options)
+			if err != nil {
+				respErr(c, err)
+				return
+			}
+
+			respOK(c, err)
+			return
+		} else if err != nil {
+			respErr(c, err)
+			return
+		}
+	}
+
 	_, err = client.Run(name, chartRequested, vals)
 	if err != nil {
 		respErr(c, err)
@@ -561,13 +620,18 @@ func upgradeRelease(c *gin.Context) {
 func listReleases(c *gin.Context) {
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
+
 	var options releaseListOptions
 	err := c.ShouldBindJSON(&options)
 	if err != nil && err != io.EOF {
 		respErr(c, err)
 		return
 	}
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	if options.AllNamespaces {
+		namespace = ""
+	}
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -578,13 +642,6 @@ func listReleases(c *gin.Context) {
 	// merge listReleasesV2 options
 	client.All = options.All
 	client.AllNamespaces = options.AllNamespaces
-	if client.AllNamespaces {
-		err = actionConfig.Init(settings.RESTClientGetter(), "", os.Getenv("HELM_DRIVER"), glog.Infof)
-		if err != nil {
-			respErr(c, err)
-			return
-		}
-	}
 	client.ByDate = options.ByDate
 	client.SortReverse = options.SortReverse
 	client.Limit = options.Limit
@@ -617,8 +674,9 @@ func getReleaseStatus(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -639,8 +697,9 @@ func listReleaseHistories(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
+	kubeConfig := c.Query("kube_config")
 
-	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext))
+	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
@@ -658,4 +717,25 @@ func listReleaseHistories(c *gin.Context) {
 	}
 
 	respOK(c, getReleaseHistory(results))
+}
+
+func readValues(filePath string) ([]byte, error) {
+	u, _ := url.Parse(filePath)
+	if u == nil {
+		return []byte(filePath), nil
+	}
+
+	p := getter.All(settings)
+	g, err := p.ByScheme(u.Scheme)
+	// if scheme not support, return self
+	if err != nil {
+		return []byte(filePath), nil
+	}
+
+	data, err := g.Get(filePath, getter.WithURL(filePath))
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Bytes(), nil
 }
