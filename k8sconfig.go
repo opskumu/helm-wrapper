@@ -20,7 +20,7 @@ func uploadKubeConfig(c *gin.Context) {
 	//path := "D:/tmp/config"
 
 	id := uuid.New().String()
-	path := "/tmp/k8s-config/" + id
+	path := helmConfig.UploadPath + "/k8s-config/" + id
 	//path := "D:/tmp/k8s-config/" + id
 	fileName := "config"
 
