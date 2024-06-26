@@ -227,6 +227,7 @@ func showReleaseInfo(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	info := c.Query("info")
+	allValues := c.Query("all_values")
 	kubeConfig := c.Query("kube_config")
 	if info == "" {
 		info = "values"
@@ -259,6 +260,9 @@ func showReleaseInfo(c *gin.Context) {
 		}
 
 		client := action.NewGetValues(actionConfig)
+		if allValues == "true" {
+			client.AllValues = true
+		}
 		results, err := client.Run(name)
 		if err != nil {
 			respErr(c, err)

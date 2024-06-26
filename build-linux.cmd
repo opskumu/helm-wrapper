@@ -14,7 +14,7 @@ set GOARCH=amd64
 go build -ldflags -s -w -o helm-wrapper
 
 
-docker build -t registry.inspures.com/csp/heimdall/helm-wrapper:20240425 .
+docker build -t registry.inspures.com/csp/heimdall/helm-wrapper:20240626 .
 
 # windows ---> arm64
 
