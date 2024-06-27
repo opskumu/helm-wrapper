@@ -4,7 +4,7 @@ go build -o bin/helm-wrapper
 
 
 
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags -s -w -o helm-wrapper
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags -s -w -o ./bin/helm-wrapper
 
 
 
