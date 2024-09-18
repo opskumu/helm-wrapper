@@ -57,7 +57,18 @@ POST Body:
     - `DELETE`
     - `/api/namespaces/:namespace/releases/:release`
 
+Delete Body:
+``` json 
+{
+    "dry_run": false,           // `--dry-run`
+    "disable_hooks": false,     // `--no-hooks`
+    "wait": false,              // `--wait`
+    "timeout": "5m0s",          // `--timeout`
+    "description": "",          // `--description`
+    "ignore_not_found": false,  // `--ignore-not-found`
+}
 
+```
 + helm upgrade
     - `PUT`
     - `/api/namespaces/:namespace/releases/:release?chart=<chartName>`
