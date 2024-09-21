@@ -439,11 +439,19 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	return nil
 }
 
-func uninstallRelease(c *gin.Context, options releaseUninstallOptions) {
+func uninstallRelease(c *gin.Context) {
 	name := c.Param("release")
 	namespace := c.Param("namespace")
 	kubeContext := c.Query("kube_context")
 	kubeConfig := c.Query("kube_config")
+
+	var options releaseUninstallOptions
+
+	err := c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
 
 	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
@@ -451,7 +459,6 @@ func uninstallRelease(c *gin.Context, options releaseUninstallOptions) {
 		return
 	}
 	client := action.NewUninstall(actionConfig)
-
 	client.DisableHooks = options.DisableHooks
 	client.DryRun = options.DryRun
 	client.IgnoreNotFound = options.IgnoreNotFound
