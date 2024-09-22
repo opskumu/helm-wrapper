@@ -122,6 +122,18 @@ type releaseListOptions struct {
 	Pending      bool   `json:"pending"`
 }
 
+// helm Uninstall struct
+type releaseUninstallOptions struct {
+	DisableHooks        bool          `json:"disable_hooks"`
+	DryRun              bool          `json:"dry_run"`
+	IgnoreNotFound      bool          `json:"ignore_not_found"`
+	KeepHistory         bool          `json:"keep_history"`
+	Wait                bool          `json:"wait"`
+	DeletionPropagation string        `json:"delete_propagation"`
+	Timeout             time.Duration `json:"timeout"`
+	Description         string        `json:"description"`
+}
+
 func formatChartname(c *chart.Chart) string {
 	if c == nil || c.Metadata == nil {
 		// This is an edge case that has happened in prod, though we don't
@@ -433,12 +445,29 @@ func uninstallRelease(c *gin.Context) {
 	kubeContext := c.Query("kube_context")
 	kubeConfig := c.Query("kube_config")
 
+	var options releaseUninstallOptions
+
+	err := c.ShouldBindJSON(&options)
+	if err != nil && err != io.EOF {
+		respErr(c, err)
+		return
+	}
+
 	actionConfig, err := actionConfigInit(InitKubeInformation(namespace, kubeContext, kubeConfig))
 	if err != nil {
 		respErr(c, err)
 		return
 	}
 	client := action.NewUninstall(actionConfig)
+	client.DisableHooks = options.DisableHooks
+	client.DryRun = options.DryRun
+	client.IgnoreNotFound = options.IgnoreNotFound
+	client.KeepHistory = options.KeepHistory
+	client.Wait = options.Wait
+	client.DeletionPropagation = options.DeletionPropagation
+	client.Timeout = options.Timeout
+	client.Description = options.Description
+
 	_, err = client.Run(name)
 	if err != nil {
 		respErr(c, err)
