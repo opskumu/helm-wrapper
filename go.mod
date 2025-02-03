@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gofrs/flock v0.8.1
-	github.com/golang/glog v1.1.2
+	github.com/golang/glog v1.2.4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	helm.sh/helm/v3 v3.15.2
