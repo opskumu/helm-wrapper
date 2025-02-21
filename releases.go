@@ -393,6 +393,17 @@ func runInstall(name, namespace, kubeContext, aimChart, kubeConfig string, optio
 	client.ChartPathOptions.Verify = options.ChartPathOptions.Verify
 	client.ChartPathOptions.Version = options.ChartPathOptions.Version
 
+	registryClient, err := createOCIRegistryClientForChartPathOptions(
+		&aimChart,
+		&client.ChartPathOptions,
+	)
+	if err != nil {
+		return
+	}
+	if registryClient != nil {
+		client.SetRegistryClient(registryClient)
+	}
+
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {
 		return
@@ -600,6 +611,18 @@ func upgradeRelease(c *gin.Context) {
 	client.ChartPathOptions.Username = options.ChartPathOptions.Username
 	client.ChartPathOptions.Verify = options.ChartPathOptions.Verify
 	client.ChartPathOptions.Version = options.ChartPathOptions.Version
+
+	registryClient, err := createOCIRegistryClientForChartPathOptions(
+		&aimChart,
+		&client.ChartPathOptions,
+	)
+	if err != nil {
+		respErr(c, err)
+		return
+	}
+	if registryClient != nil {
+		client.SetRegistryClient(registryClient)
+	}
 
 	cp, err := client.ChartPathOptions.LocateChart(aimChart, settings)
 	if err != nil {

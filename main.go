@@ -20,8 +20,9 @@ import (
 )
 
 type HelmConfig struct {
-	UploadPath string        `yaml:"uploadPath"`
-	HelmRepos  []*repo.Entry `yaml:"helmRepos"`
+	UploadPath     string        `yaml:"uploadPath"`
+	HelmRepos      []*repo.Entry `yaml:"helmRepos"`
+	HelmRegistries []*repo.Entry `yaml:"helmRegistries"`
 }
 
 var (
@@ -86,8 +87,17 @@ func main() {
 		}
 	}
 
+	// init registries
+	for _, c := range helmConfig.HelmRegistries {
+		err := initRegistry(c)
+		if err != nil {
+			glog.Fatalln(err)
+		}
+	}
+
 	// router
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Welcome helm wrapper server")
 	})
