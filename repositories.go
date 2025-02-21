@@ -19,8 +19,6 @@ import (
 	"helm.sh/helm/v3/pkg/helmpath"
 	"helm.sh/helm/v3/pkg/repo"
 	"sigs.k8s.io/yaml"
-
-	// "github.com/davecgh/go-spew/spew"
 )
 
 const searchMaxScore = 25
