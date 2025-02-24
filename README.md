@@ -286,3 +286,25 @@ kubectl create -f ./deployment
 ```
 
 > __Noets:__ with deployment/rbac.yaml, you not need `--kubeconfig`
+
+## OCI Registries
+For helm install, upgrade, and upgrade-install, replace the `chart` parameter with the OCI registry URL for the chart.
+
+### Authentication
+There are three ways to authenticate to an OCI registry: request body, config.yaml, and helm settings registry config file.  You only need to use one of these methods, but it also shouldn't cause any issues if you provide all three (not that it is advisable to do so).
+
+#### Request body
+You can include a `username` and `password` in the request body.
+
+#### config.yaml
+Similar to how you can add a helm repo under the `helmRepos` key in `config.yaml`, you can add a registry under the `helmRegistries` key.  The domain must match the chart registry URL in the upgrade or install request.  For example:
+```
+helmRegistries:
+ - name: registry_name
+   url: oci://registry.com
+   username: username
+   password: password
+```
+
+#### Helm settings registry config file
+Both of the previous methods will also create/update the registry config file (the same as the helm CLI).  However, you can also put this file in the container and helm-wrapper will use that to authenticate.  By default, this file is located at `/home/helm/.config/registry/config.json`.  Again, the domain must match the chart registry URL in the upgrade or install request.  Refer to helm documentation on how to configure this.  You can also use one of the other authentication methods and then look at the file that is created in the container.
