@@ -111,10 +111,14 @@ func initRegistry(c *repo.Entry) (error) {
 }
 
 func createOCIRegistryClientForChartPathOptions(aimChart *string, chartPathOptions *action.ChartPathOptions) (*registry.Client, error) {
-	registryConfig, err := chartPathOptionsToRegistryConfig(aimChart, chartPathOptions)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to convert chart path options to registry config: %s", err)
+	if strings.HasPrefix(*aimChart, "oci://") {
+		registryConfig, err := chartPathOptionsToRegistryConfig(aimChart, chartPathOptions)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to convert chart path options to registry config: %s", err)
+		}
+
+		return createOCIRegistryClient(registryConfig)
 	}
 
-	return createOCIRegistryClient(registryConfig)
+	return nil, nil
 }

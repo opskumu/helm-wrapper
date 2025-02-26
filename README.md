@@ -307,4 +307,4 @@ helmRegistries:
 ```
 
 #### Helm settings registry config file
-Both of the previous methods will also create/update the registry config file (the same as the helm CLI).  However, you can also put this file in the container and helm-wrapper will use that to authenticate.  By default, this file is located at `/home/helm/.config/registry/config.json`.  Again, the domain must match the chart registry URL in the upgrade or install request.  Refer to helm documentation on how to configure this.  You can also use one of the other authentication methods and then look at the file that is created in the container.
+Both of the previous methods will also create/update the registry config file (the same as the helm CLI).  However, you can also put this file in the container and helm-wrapper will use that to authenticate.  By default, this file is located at `/home/helm/.config/helm/registry/config.json`.  Again, the domain must match the chart registry URL in the upgrade or install request.  Refer to helm documentation on how to configure this.  You can also use one of the other authentication methods and then look at the file that is created in the container.
